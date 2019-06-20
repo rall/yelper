@@ -1,5 +1,7 @@
 {
   "name": "yelper",
-  "integrations": {},
+  "integrations": {
+    "cordova": {}
+  },
   "type": "angular"
 }
