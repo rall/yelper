@@ -13,13 +13,13 @@ export class YelpService {
   ) { }
 
 
-  getBusinesses(term:string, latlng:{ latitude:string, longitude:string }, radius:string) {
+  getBusinesses([term, latlng, radius]:[string, { latitude:string, longitude:string }, number]) {
     const params = new HttpParams().
       set('name', term).
       set('latitude', latlng.latitude).
       set('longitude', latlng.longitude).
-      set('radius', radius);
+      set('radius', String(radius));
  
-    return this.http.get("businesses/search", { params: params })
+    return this.http.get("businesses/search", { params: params });
   }
 }
