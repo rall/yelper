@@ -7,7 +7,12 @@ import { Subject } from 'rxjs';
   styleUrls: ['google-map.page.scss']
 })
 export class GoogleMapPage {
+  readySubject: Subject<boolean> = new Subject();
 
   constructor() {}
 
+  ionViewDidEnter() {
+    this.readySubject.next(true);
+    this.readySubject.complete();
+  }
 }
