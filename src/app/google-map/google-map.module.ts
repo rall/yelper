@@ -3,15 +3,17 @@ import { RouterModule } from '@angular/router';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Tab2Page } from './tab2.page';
+import { GoogleMapPage } from './google-map.page';
+import { ComponentsModule } from '../components/components.module';
 
 @NgModule({
   imports: [
     IonicModule,
     CommonModule,
     FormsModule,
-    RouterModule.forChild([{ path: '', component: Tab2Page }])
+    RouterModule.forChild([{ path: '', component: GoogleMapPage }]),
+    ComponentsModule,
   ],
-  declarations: [Tab2Page]
+  declarations: [GoogleMapPage]
 })
-export class Tab2PageModule {}
+export class GoogleMapPageModule {}
