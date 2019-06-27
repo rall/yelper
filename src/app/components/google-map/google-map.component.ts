@@ -11,10 +11,6 @@ function handleMapEvent(target: GoogleMap, type: string): Observable<any> {
   return fromEventPattern(add, remove);
 }
 
-export function debug<T>(message) {
-  return tap<T>(val => console.info(message, val), console.error, () => console.log(message, 'COMPLETED'));
-}
-
 @Component({
   selector: 'google-map',
   templateUrl: './google-map.component.html',
