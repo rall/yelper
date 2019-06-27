@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { Subject, fromEventPattern, Observable, from, forkJoin } from 'rxjs';
+import { Subject, fromEventPattern, Observable, from } from 'rxjs';
 import { GoogleMaps, GoogleMap, GoogleMapsEvent } from '@ionic-native/google-maps/ngx';
-import { switchMap, map, tap, share, mapTo, pluck, take, shareReplay } from 'rxjs/operators';
+import { switchMap, share, mapTo, take, shareReplay, filter, switchMapTo } from 'rxjs/operators';
 import googleMapOptions from './google-map.options';
 import { Platform } from '@ionic/angular';
 
@@ -41,11 +41,20 @@ export class GoogleMapComponent implements OnInit {
   }
 
   ngOnInit() {
-    const showMap$ = forkJoin(this.map$, this.pageReadySubject).pipe(
-      map(([mapObject]:[GoogleMap, boolean]) => mapObject),
+    const showMap$ = this.pageReadySubject.pipe(
+      filter(Boolean),
+      switchMapTo(this.map$),
       share(),
     );
-    showMap$.subscribe(mapObject => mapObject.setDiv('map-canvas'));
     showMap$.subscribe(mapObject => mapObject.setVisible(true));
+    showMap$.subscribe(mapObject => mapObject.setDiv('map-canvas'));
+
+    const hideMap$ = this.pageReadySubject.pipe(
+      filter(show => !show),
+      switchMapTo(this.map$),
+      share(),
+    );
+    hideMap$.subscribe(mapObject => mapObject.setDiv());
+    hideMap$.subscribe(mapObject => mapObject.setVisible(false));
   }
 }

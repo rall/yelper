@@ -13,6 +13,9 @@ export class GoogleMapPage {
 
   ionViewDidEnter() {
     this.readySubject.next(true);
-    this.readySubject.complete();
+  }
+
+  ionViewWillLeave() {
+    this.readySubject.next(false);
   }
 }
