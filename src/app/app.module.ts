@@ -9,8 +9,7 @@ import { StatusBar } from '@ionic-native/status-bar/ngx';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { ComponentsModule } from './components/components.module';
-import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
-import { YelpTokenInterceptor } from './interceptors/yelp-token.interceptor';
+import { HTTP } from '@ionic-native/http/ngx';
 
 @NgModule({
   declarations: [AppComponent],
@@ -20,16 +19,12 @@ import { YelpTokenInterceptor } from './interceptors/yelp-token.interceptor';
     IonicModule.forRoot(), 
     AppRoutingModule,
     ComponentsModule,
-    HttpClientModule,
   ],
   providers: [
     StatusBar,
     SplashScreen,
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    {
-      provide: HTTP_INTERCEPTORS,
-      useClass: YelpTokenInterceptor
-    }
+    HTTP,
   ],
   bootstrap: [AppComponent]
 })
