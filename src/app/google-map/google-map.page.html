@@ -1,11 +1,10 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>
-      Tab Two
-    </ion-title>
+    <app-search></app-search>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
-  <google-map [pageReadySubject]="readySubject"></google-map>  
-</ion-content>
+  <app-google-map [pageReadySubject]="readySubject">
+  </app-google-map>
+ </ion-content>
