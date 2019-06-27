@@ -4,6 +4,7 @@ import { GoogleMaps, GoogleMap, GoogleMapsEvent } from '@ionic-native/google-map
 import { switchMap, share, mapTo, take, shareReplay, filter, switchMapTo } from 'rxjs/operators';
 import googleMapOptions from './google-map.options';
 import { Platform } from '@ionic/angular';
+import { mapToEventStream } from 'src/app/modules/rxjs-helpers';
 
 function handleMapEvent(target: GoogleMap, type: string): Observable<any> {
   const add = handler => target.addEventListener(type).subscribe(handler);
@@ -32,9 +33,8 @@ export class GoogleMapComponent implements OnInit {
       shareReplay(1),
     );
     
-    const mapReadyEvent$ = this.map$.pipe(
-      switchMap(mapObject => handleMapEvent(mapObject, GoogleMapsEvent.MAP_READY)),
-      mapTo(true),
+    this.mapReady$ = this.map$.pipe(
+      mapToEventStream(GoogleMapsEvent.MAP_READY),
       shareReplay(1),
     );
 
