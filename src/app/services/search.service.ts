@@ -1,35 +1,56 @@
 import { Injectable } from '@angular/core';
-import { Subject, combineLatest } from 'rxjs';
-import { distinctUntilChanged, switchMap } from 'rxjs/operators';
-import { ILatLng } from '../interfaces/lat-lng';
+import { Subject, combineLatest, BehaviorSubject } from 'rxjs';
+import { distinctUntilChanged, switchMap, map, pluck, concatAll } from 'rxjs/operators';
 import { YelpService } from '../api/yelp.service';
+import { ILatLng } from '@ionic-native/google-maps/ngx';
+import { Coordinates } from '../interfaces/coordinates';
+import { SearchData } from '../interfaces/search-data';
+
+function latLngToCoordinates(latlng:ILatLng):Coordinates {
+  return <Coordinates>{
+      latitude: String(latlng.lat),
+      longitude: String(latlng.lng)
+  }
+}
+
+function coordinatesEquality(a: Coordinates, b: Coordinates) {
+  return a.latitude === b.latitude && a.longitude === b.longitude;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class SearchService {
 
-  latlng: Subject<ILatLng> = new Subject();
-  term: Subject<string> = new Subject();
-  radius: Subject<number> = new Subject();
+  latlngSubject: BehaviorSubject<ILatLng> = new BehaviorSubject({ lat: 41.884598, lng: -74.291093 });
+  termSubject: Subject<string> = new Subject();
+  radiusSubject: BehaviorSubject<number> = new BehaviorSubject(40000);
+  searchSubject: Subject<SearchData> = new Subject();
 
   constructor(
     private yelp:YelpService,
   ) {
-    const term$ = this.term.pipe(
+    const term$ = this.termSubject.pipe(
       distinctUntilChanged(),
     ),
-    latlng$ = this.latlng.pipe(
-      distinctUntilChanged(),
+
+    latlng$ = this.latlngSubject.pipe(
+      map(latLngToCoordinates),
+      distinctUntilChanged(coordinatesEquality),
     ),
-    radius$ = this.radius.pipe(
+
+    radius$ = this.radiusSubject.pipe(
       distinctUntilChanged(),
     );
 
     combineLatest(term$, latlng$, radius$).pipe(
-      switchMap(this.yelp.getBusinesses.bind(this.yelp))
-    );
+      switchMap(this.yelp.getBusinesses.bind(this.yelp)),
+    ).subscribe(this.searchSubject);
 
-
+    this.searchSubject.pipe(
+      pluck("businesses"),
+      concatAll(),
+      pluck("name"),
+    ).subscribe(console.info);
   }
 }
