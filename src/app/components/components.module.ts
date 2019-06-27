@@ -2,17 +2,22 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GoogleMapComponent } from './google-map/google-map.component';
 import { IonicModule } from '@ionic/angular';
+import { SearchComponent } from './search/search.component';
+import { ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
-    GoogleMapComponent
+    GoogleMapComponent,
+    SearchComponent
   ],
   imports: [
     CommonModule,
-    IonicModule
+    IonicModule.forRoot(),
+    ReactiveFormsModule,
   ],
   exports: [
-    GoogleMapComponent
+    GoogleMapComponent,
+    SearchComponent
   ]
 })
 export class ComponentsModule { }
