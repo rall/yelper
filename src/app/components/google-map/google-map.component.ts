@@ -6,10 +6,20 @@ import googleMapOptions from './google-map.options';
 import { Platform } from '@ionic/angular';
 import { mapToEventStream } from 'src/app/modules/rxjs-helpers';
 
-function handleMapEvent(target: GoogleMap, type: string): Observable<any> {
-  const add = handler => target.addEventListener(type).subscribe(handler);
-  const remove = handler => target.removeEventListener(handler);
-  return fromEventPattern(add, remove);
+
+// https://gis.stackexchange.com/a/81390
+function zoomLevelToScale(level:number):number {
+  return 591657550.5 / Math.pow(2, level - 1);
+}
+
+function pixelsToMeters([scale, pixels]:[number, number]):number {
+  const screenInches = pixels / 96;
+  const screenMeters = screenInches * 0.0254;
+  return screenMeters * scale;
+}
+
+function apiRadiusLimit(radius:number):number {
+  return radius > 40000 ? 40000 : radius;
 }
 
 @Component({
@@ -56,5 +66,33 @@ export class GoogleMapComponent implements OnInit {
     );
     hideMap$.subscribe(mapObject => mapObject.setDiv());
     hideMap$.subscribe(mapObject => mapObject.setVisible(false));
+
+    /* update camera position after each camera move event */
+
+    const cameraMove$:Observable<CameraPosition<ILatLng>> = this.map$.pipe(
+      mapToEventStream<[CameraPosition<ILatLng>, any]>(GoogleMapsEvent.CAMERA_MOVE_END),
+      map(([position]) => position),
+      share(),
+    );
+
+    /* update approximate search radius in meters from current camera position */
+
+    cameraMove$.pipe(
+      pluck("zoom"),
+      distinctUntilChanged(),
+      filter<number>(Boolean),
+      map(zoomLevelToScale),
+      withLatestFrom(this.platformDimension$),
+      map(pixelsToMeters),
+      map(Math.round),
+      map(apiRadiusLimit),
+    ).subscribe(this.searchService.radiusSubject);
+
+    /* update latlng from current camera position */
+
+    cameraMove$.pipe(
+      pluck("target"),
+    ).subscribe(this.searchService.latlngSubject);
+    
   }
 }
