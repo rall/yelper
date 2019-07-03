@@ -57,6 +57,7 @@ export class GoogleMapComponent implements OnInit {
       shareReplay(1),
     );
 
+    this.googleMapReady$.subscribe(mapObject => mapObject.setOptions(googleMapOptions));
   }
 
   ngOnInit() {
