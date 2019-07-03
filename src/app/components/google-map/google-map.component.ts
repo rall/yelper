@@ -4,8 +4,16 @@ import { GoogleMaps, GoogleMap, GoogleMapsEvent } from '@ionic-native/google-map
 import { switchMap, share, mapTo, take, shareReplay, filter, switchMapTo } from 'rxjs/operators';
 import googleMapOptions from './google-map.options';
 import { Platform } from '@ionic/angular';
-import { mapToEventStream } from 'src/app/modules/rxjs-helpers';
 import { SearchService } from 'src/app/services/search.service';
+import { mapToEventStream, debug, eventHandler } from 'src/app/modules/rxjs-helpers';
+import { Coordinates } from 'src/app/interfaces/coordinates'
+
+function coordinatesToLatLng(coordinates:Coordinates):ILatLng {
+  return <ILatLng>{
+      lat: Number(coordinates.latitude),
+      lng: Number(coordinates.longitude)
+  }
+}
 
 
 // https://gis.stackexchange.com/a/81390
@@ -34,6 +42,8 @@ export class GoogleMapComponent implements OnInit {
 
   map$:Observable<GoogleMap>;
   googleMapReady$:Observable<GoogleMap>;
+  platformDimension$: Observable<number>;
+
   setBoundsSubject:Subject<boolean> = new Subject();
 
   constructor(
@@ -45,6 +55,11 @@ export class GoogleMapComponent implements OnInit {
     this.map$ = platformReady$.pipe(
       mapTo(GoogleMaps.create(googleMapOptions)),
       take(1),
+      shareReplay(1),
+    );
+
+    this.platformDimension$ = platformReady$.pipe(
+      mapTo(Math.min(this.platform.height(), this.platform.width())),
       shareReplay(1),
     );
     
