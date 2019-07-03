@@ -33,6 +33,7 @@ export class GoogleMapComponent implements OnInit {
 
   map$:Observable<GoogleMap>;
   mapReady$:Observable<boolean>;
+  setBoundsSubject:Subject<boolean> = new Subject();
 
   constructor(
     private platform: Platform,
