@@ -44,16 +44,12 @@ export class SearchService {
       distinctUntilChanged(),
     );
 
+    const getBusinesses = this.yelp.getBusinesses.bind(this.yelp);
+
     combineLatest(term$, latlng$, radius$).pipe(
       debounceTime(1000),
-      switchMap(this.yelp.getBusinesses.bind(this.yelp)),
+      switchMap(getBusinesses),
       debug('search'),
     ).subscribe(this.searchSubject);
-
-    this.searchSubject.pipe(
-      pluck("businesses"),
-      concatAll(),
-      pluck("name"),
-    ).subscribe(console.info);
   }
 }
