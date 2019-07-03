@@ -5,6 +5,7 @@ import { switchMap, share, mapTo, take, shareReplay, filter, switchMapTo } from 
 import googleMapOptions from './google-map.options';
 import { Platform } from '@ionic/angular';
 import { mapToEventStream } from 'src/app/modules/rxjs-helpers';
+import { SearchService } from 'src/app/services/search.service';
 
 
 // https://gis.stackexchange.com/a/81390
@@ -32,20 +33,27 @@ export class GoogleMapComponent implements OnInit {
   @Input() pageReadySubject: Subject<boolean>;
 
   map$:Observable<GoogleMap>;
-  mapReady$:Observable<boolean>;
+  googleMapReady$:Observable<GoogleMap>;
   setBoundsSubject:Subject<boolean> = new Subject();
 
   constructor(
     private platform: Platform,
+    private searchService: SearchService,
   ) {
-    this.map$ = from(this.platform.ready()).pipe(
+    const platformReady$ = from(this.platform.ready());
+
+    this.map$ = platformReady$.pipe(
       mapTo(GoogleMaps.create(googleMapOptions)),
       take(1),
       shareReplay(1),
     );
     
-    this.mapReady$ = this.map$.pipe(
-      mapToEventStream(GoogleMapsEvent.MAP_READY),
+    const readyEvent$ = this.map$.pipe(
+      map(mapObject => eventHandler(mapObject, GoogleMapsEvent.MAP_READY)),
+    );
+
+    this.googleMapReady$ = this.map$.pipe(
+      sample(readyEvent$),
       shareReplay(1),
     );
 
@@ -57,7 +65,9 @@ export class GoogleMapComponent implements OnInit {
       switchMapTo(this.map$),
       share(),
     );
+
     showMap$.subscribe(mapObject => mapObject.setVisible(true));
+
     showMap$.subscribe(mapObject => mapObject.setDiv('map-canvas'));
 
     const hideMap$ = this.pageReadySubject.pipe(
@@ -65,9 +75,20 @@ export class GoogleMapComponent implements OnInit {
       switchMapTo(this.map$),
       share(),
     );
+
     hideMap$.subscribe(mapObject => mapObject.setDiv());
+
     hideMap$.subscribe(mapObject => mapObject.setVisible(false));
 
+    const search$ = this.googleMapReady$.pipe(
+      switchMapTo(this.searchService.searchSubject),
+    );
+
+    const businesses$ = search$.pipe(
+      pluck("businesses"),
+      startWith([]),
+      share(),
+    );
     /* update camera position after each camera move event */
 
     const cameraMove$:Observable<CameraPosition<ILatLng>> = this.map$.pipe(
