@@ -2,8 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { SearchService } from 'src/app/services/search.service';
 import { Observable, Subject } from 'rxjs';
-import { distinctUntilChanged } from 'rxjs/operators';
-import { mapToLatestFrom } from 'src/app/modules/rxjs-helpers';
+import { distinctUntilChanged, sample } from 'rxjs/operators';
 
 @Component({
   selector: 'app-search',
@@ -27,8 +26,8 @@ export class SearchComponent implements OnInit {
   ngOnInit() {
     const term$:Observable<string> = this.searchForm.get("term").valueChanges;
 
-    this.submitSubject.pipe(
-      mapToLatestFrom(term$),
+    term$.pipe(
+      sample(this.submitSubject),
       distinctUntilChanged(),
     ).subscribe(this.search.termSubject);
   }
