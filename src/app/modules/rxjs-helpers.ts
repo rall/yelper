@@ -10,14 +10,16 @@ interface EventTarget {
     removeEventListener: Function;
 }
 
-export function mapToEventStream(event:string) {
-    return <T extends EventTarget>(observable$: Observable<T>): Observable<T> => {
+export function eventHandler<T extends EventTarget>(target: T, type:string): Observable<any> {
+    const add = handler => target.addEventListener(type).subscribe(handler);
+    const remove = handler => target.removeEventListener(handler);
+    return fromEventPattern(add, remove);
+}
+  
+export function mapToEventStream<U>(event:string) {
+    return <T extends EventTarget>(observable$: Observable<T>): Observable<U> => {
         return observable$.pipe(
-            switchMap((target:T, index?: number) => {
-                const add = handler => target.addEventListener(event).subscribe(handler);
-                const remove = handler => target.removeEventListener(handler);
-                return fromEventPattern<T>(add, remove);
-            }),
+            switchMap(source => eventHandler(source, event)),
         );
     }
 };
