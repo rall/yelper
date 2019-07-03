@@ -23,9 +23,9 @@ function coordinatesEquality(a: Coordinates, b: Coordinates) {
 })
 export class SearchService {
 
-  latlngSubject: BehaviorSubject<ILatLng> = new BehaviorSubject({ lat: 41.884598, lng: -74.291093 });
+  latlngSubject: Subject<ILatLng> = new Subject();
   termSubject: Subject<string> = new Subject();
-  radiusSubject: BehaviorSubject<number> = new BehaviorSubject(40000);
+  radiusSubject: Subject<number> = new Subject();
   searchSubject: Subject<SearchData> = new Subject();
 
   constructor(
