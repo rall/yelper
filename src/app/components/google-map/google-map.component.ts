@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { Subject, fromEventPattern, Observable, from } from 'rxjs';
-import { GoogleMaps, GoogleMap, GoogleMapsEvent } from '@ionic-native/google-maps/ngx';
-import { switchMap, share, mapTo, take, shareReplay, filter, switchMapTo } from 'rxjs/operators';
+import { Subject, Observable, from, combineLatest, of, BehaviorSubject } from 'rxjs';
+import { GoogleMaps, GoogleMap, GoogleMapsEvent, ILatLng, CameraPosition, GoogleMapOptions } from '@ionic-native/google-maps/ngx';
+import { switchMap, share, mapTo, take, shareReplay, filter, switchMapTo, pluck, concatAll, map, toArray, withLatestFrom, distinctUntilChanged, startWith, sample, takeUntil, repeatWhen } from 'rxjs/operators';
 import googleMapOptions from './google-map.options';
 import { Platform } from '@ionic/angular';
 import { SearchService } from 'src/app/services/search.service';
@@ -105,6 +105,34 @@ export class GoogleMapComponent implements OnInit {
       startWith([]),
       share(),
     );
+    
+    const latLngBounds$ = businesses$.pipe(
+      switchMap(businesses => of(businesses).pipe(
+        take(1),
+        concatAll(),
+        pluck("coordinates"),
+        map(coordinatesToLatLng),
+        toArray(),
+      )),
+    );
+
+    /* freeze subject to prevent new searches when map move event is triggered by a bounds redraw */
+
+    const freezeSubject:BehaviorSubject<boolean> = new BehaviorSubject(false);
+
+    /* set  bounds */
+    const mapPositionOpts$ = latLngBounds$.pipe(
+      sample(this.setBoundsSubject),
+      filter(latlngArray => latlngArray.length > 0),
+      map(latlngArray => <CameraPosition<ILatLng[]>>{ target: latlngArray }),
+      map(cameraPosition => <GoogleMapOptions>{ camera: cameraPosition }),
+      share(),
+    );
+
+    combineLatest(this.googleMapReady$, mapPositionOpts$).pipe(
+      mapTo(true),
+    ).subscribe(freezeSubject);
+
     /* update camera position after each camera move event */
 
     const cameraMove$:Observable<CameraPosition<ILatLng>> = this.map$.pipe(
@@ -113,9 +141,35 @@ export class GoogleMapComponent implements OnInit {
       share(),
     );
 
+    
+    combineLatest(this.googleMapReady$, mapPositionOpts$).pipe(
+      switchMapTo(
+        cameraMove$.pipe(
+          take(1),
+        )
+      ),
+      mapTo(false),
+      debug('unfreeze'),
+    ).subscribe(freezeSubject);
+
+    combineLatest(this.googleMapReady$, mapPositionOpts$).subscribe(
+      ([googleMap, cameraPosition]) => googleMap.setOptions(cameraPosition)
+    );
+
+
+    const freeze$ = freezeSubject.pipe(
+      filter(Boolean),
+    );
+
+    const unfreeze$ = freezeSubject.pipe(
+      filter(freeze => !freeze),
+    );
+    
     /* update approximate search radius in meters from current camera position */
 
     cameraMove$.pipe(
+      takeUntil(freeze$),
+      repeatWhen(() => unfreeze$),
       pluck("zoom"),
       distinctUntilChanged(),
       filter<number>(Boolean),
@@ -129,8 +183,9 @@ export class GoogleMapComponent implements OnInit {
     /* update latlng from current camera position */
 
     cameraMove$.pipe(
+      takeUntil(freeze$),
+      repeatWhen(() => unfreeze$),
       pluck("target"),
     ).subscribe(this.searchService.latlngSubject);
-    
   }
 }
