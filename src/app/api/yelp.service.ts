@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HTTP } from '@ionic-native/http/ngx';
 import { from, Observable } from 'rxjs';
-import { pluck, map } from 'rxjs/operators';
+import { pluck, map, filter } from 'rxjs/operators';
 import { SearchData } from '../interfaces/search-data';
+import { Platform } from '@ionic/angular';
 
 @Injectable({
   providedIn: 'root'
@@ -13,9 +14,14 @@ export class YelpService {
   static apiKey:string = "";
 
   constructor(
-    private http: HTTP
+    private http: HTTP,
+    private platform: Platform
   ) {
-    this.http.setHeader('api.yelp.com', 'Authorization', `Bearer ${YelpService.apiKey}`);
+    from(this.platform.ready()).pipe(
+      filter(readySource => readySource === "cordova"),
+    ).subscribe(() => 
+      this.http.setHeader('api.yelp.com', 'Authorization', `Bearer ${YelpService.apiKey}`)
+    );
   }
 
   private stringify(coordinates: Coordinates):{latitude: string, longitude: string} {
