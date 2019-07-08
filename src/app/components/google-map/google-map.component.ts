@@ -39,7 +39,7 @@ function apiRadiusLimit(radius:number):number {
 export class GoogleMapComponent implements OnInit {
   @Input() pageReadySubject: Subject<boolean>;
 
-  map$:Observable<GoogleMap>;
+  googleMap$:Observable<GoogleMap>;
   googleMapReady$:Observable<GoogleMap>;
   platformDimension$: Observable<number>;
 
@@ -51,7 +51,7 @@ export class GoogleMapComponent implements OnInit {
   ) {
     const platformReady$ = from(this.platform.ready());
 
-    this.map$ = platformReady$.pipe(
+    this.googleMap$ = platformReady$.pipe(
       mapTo(GoogleMaps.create(googleMapOptions)),
       take(1),
       shareReplay(1),
@@ -62,11 +62,11 @@ export class GoogleMapComponent implements OnInit {
       shareReplay(1),
     );
     
-    const readyEvent$ = this.map$.pipe(
+    const readyEvent$ = this.googleMap$.pipe(
       map(mapObject => eventHandler(mapObject, GoogleMapsEvent.MAP_READY)),
     );
 
-    this.googleMapReady$ = this.map$.pipe(
+    this.googleMapReady$ = this.googleMap$.pipe(
       sample(readyEvent$),
       shareReplay(1),
     );
@@ -77,7 +77,7 @@ export class GoogleMapComponent implements OnInit {
   ngOnInit() {
     const showMap$ = this.pageReadySubject.pipe(
       filter(Boolean),
-      switchMapTo(this.map$),
+      switchMapTo(this.googleMap$),
       share(),
     );
 
@@ -87,7 +87,7 @@ export class GoogleMapComponent implements OnInit {
 
     const hideMap$ = this.pageReadySubject.pipe(
       filter(show => !show),
-      switchMapTo(this.map$),
+      switchMapTo(this.googleMap$),
       share(),
     );
 
@@ -134,7 +134,7 @@ export class GoogleMapComponent implements OnInit {
 
     /* update camera position after each camera move event */
 
-    const cameraMove$:Observable<CameraPosition<ILatLng>> = this.map$.pipe(
+    const cameraMove$:Observable<CameraPosition<ILatLng>> = this.googleMap$.pipe(
       mapToEventStream<[CameraPosition<ILatLng>, any]>(GoogleMapsEvent.CAMERA_MOVE_END),
       map(([position]) => position),
       share(),
