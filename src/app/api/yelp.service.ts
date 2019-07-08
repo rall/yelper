@@ -18,11 +18,18 @@ export class YelpService {
     this.http.setHeader('api.yelp.com', 'Authorization', `Bearer ${YelpService.apiKey}`);
   }
 
+  private stringify(coordinates: Coordinates):{latitude: string, longitude: string} {
+    return {
+      latitude: String(coordinates.latitude),
+      longitude: String(coordinates.longitude)
+    };
+  }
+
   getBusinesses([term, coordinates, radius]:[string, Coordinates, number]):Observable<SearchData> {
     const params = {
       name: term,
       radius: String(radius),
-      ...coordinates
+      ...this.stringify(coordinates)
     };
     return from(this.http.get(`${YelpService.baseUrl}businesses/search`, params, undefined)).pipe(
       pluck('data'),

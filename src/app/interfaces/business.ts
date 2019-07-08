@@ -1,5 +1,3 @@
-import { Coordinates } from './coordinates';
-
 export interface Business {
     alias: string;
     categories: [];

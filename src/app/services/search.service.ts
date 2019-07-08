@@ -3,14 +3,13 @@ import { Subject, combineLatest, BehaviorSubject } from 'rxjs';
 import { distinctUntilChanged, switchMap, map, pluck, concatAll, debounceTime } from 'rxjs/operators';
 import { YelpService } from '../api/yelp.service';
 import { ILatLng } from '@ionic-native/google-maps/ngx';
-import { Coordinates } from '../interfaces/coordinates';
 import { SearchData } from '../interfaces/search-data';
 import { debug } from '../modules/rxjs-helpers';
 
 function latLngToCoordinates(latlng:ILatLng):Coordinates {
   return <Coordinates>{
-      latitude: String(latlng.lat),
-      longitude: String(latlng.lng)
+      latitude: latlng.lat,
+      longitude: latlng.lng
   }
 }
 

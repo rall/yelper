@@ -6,12 +6,11 @@ import googleMapOptions from './google-map.options';
 import { Platform } from '@ionic/angular';
 import { SearchService } from 'src/app/services/search.service';
 import { mapToEventStream, debug, eventHandler } from 'src/app/modules/rxjs-helpers';
-import { Coordinates } from 'src/app/interfaces/coordinates'
 
 function coordinatesToLatLng(coordinates:Coordinates):ILatLng {
   return <ILatLng>{
-      lat: Number(coordinates.latitude),
-      lng: Number(coordinates.longitude)
+      lat: coordinates.latitude,
+      lng: coordinates.longitude
   }
 }
 
