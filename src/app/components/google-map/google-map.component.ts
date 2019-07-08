@@ -84,7 +84,7 @@ export class GoogleMapComponent implements OnInit {
 
   ngOnInit() {
     const showMap$ = this.pageReadySubject.pipe(
-      filter(Boolean),
+      filterTrue(),
       switchMapTo(this.googleMap$),
       share(),
     );
@@ -94,7 +94,7 @@ export class GoogleMapComponent implements OnInit {
     showMap$.subscribe(mapObject => mapObject.setDiv('map-canvas'));
 
     const hideMap$ = this.pageReadySubject.pipe(
-      filter(show => !show),
+      filterFalse(),
       switchMapTo(this.googleMap$),
       share(),
     );
@@ -210,7 +210,7 @@ export class GoogleMapComponent implements OnInit {
     cameraMove$.pipe(
       pluck("zoom"),
       distinctUntilChanged(),
-      filter<number>(Boolean),
+      filterTrue(),
       map(zoomLevelToScale),
       withLatestFrom(this.platformDimension$),
       map(pixelsToMeters),
