@@ -11,8 +11,6 @@ import { distinctUntilChanged, sample } from 'rxjs/operators';
 })
 
 export class SearchComponent implements OnInit {
-  private submitSubject: Subject<boolean> = new Subject();
-
   searchForm = this.formBuilder.group({
     term: [''],
   });
@@ -27,12 +25,11 @@ export class SearchComponent implements OnInit {
     const term$:Observable<string> = this.searchForm.get("term").valueChanges;
 
     term$.pipe(
-      sample(this.submitSubject),
       distinctUntilChanged(),
     ).subscribe(this.search.termSubject);
   }
 
   onSubmit() {
-    this.submitSubject.next(true);
+    this.search.triggerSubject.next(true);
   }
 }

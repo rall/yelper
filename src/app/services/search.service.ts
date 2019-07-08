@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Subject, combineLatest, BehaviorSubject } from 'rxjs';
-import { distinctUntilChanged, switchMap, map, pluck, concatAll, debounceTime } from 'rxjs/operators';
+import { Subject, combineLatest } from 'rxjs';
+import { distinctUntilChanged, switchMap, map, sample } from 'rxjs/operators';
 import { YelpService } from '../api/yelp.service';
 import { ILatLng } from '@ionic-native/google-maps/ngx';
 import { SearchData } from '../interfaces/search-data';
@@ -21,7 +21,7 @@ function coordinatesEquality(a: Coordinates, b: Coordinates) {
   providedIn: 'root'
 })
 export class SearchService {
-
+  triggerSubject: Subject<boolean> = new Subject();
   latlngSubject: Subject<ILatLng> = new Subject();
   termSubject: Subject<string> = new Subject();
   radiusSubject: Subject<number> = new Subject();
@@ -46,7 +46,8 @@ export class SearchService {
     const getBusinesses = this.yelp.getBusinesses.bind(this.yelp);
 
     combineLatest(term$, latlng$, radius$).pipe(
-      debounceTime(1000),
+      debug('params'),
+      sample(this.triggerSubject),
       switchMap(getBusinesses),
       debug('search'),
     ).subscribe(this.searchSubject);
