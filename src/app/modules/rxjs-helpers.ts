@@ -1,8 +1,12 @@
-import { Observable, fromEventPattern, of } from 'rxjs';
+import { Observable, fromEventPattern } from 'rxjs';
 import { tap, switchMap, filter } from 'rxjs/operators';
 
-export function debug<T>(message) {
-    return tap<T>(val => console.info(message, val), console.error, () => console.log(message, 'COMPLETED'));
+export function debug<T>(message:any) {
+    return (observable$: Observable<T>): Observable<T> => {
+        return observable$.pipe(
+            tap<T>(val => console.info(message, val), console.error, () => console.log(message, 'COMPLETED'))
+        );
+    }
 }
 
 interface EventTarget {
