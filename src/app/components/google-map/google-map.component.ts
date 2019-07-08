@@ -1,11 +1,12 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { Subject, Observable, from, combineLatest, of, BehaviorSubject } from 'rxjs';
-import { GoogleMaps, GoogleMap, GoogleMapsEvent, ILatLng, CameraPosition, GoogleMapOptions } from '@ionic-native/google-maps/ngx';
-import { switchMap, share, mapTo, take, shareReplay, filter, switchMapTo, pluck, concatAll, map, toArray, withLatestFrom, distinctUntilChanged, startWith, sample, takeUntil, repeatWhen } from 'rxjs/operators';
+import { Subject, Observable, from, combineLatest, BehaviorSubject, merge, zip } from 'rxjs';
+import { GoogleMaps, GoogleMap, GoogleMapsEvent, ILatLng, CameraPosition, GoogleMapOptions, MarkerOptions, Marker, VisibleRegion } from '@ionic-native/google-maps/ngx';
+import { switchMap, share, mapTo, take, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, distinctUntilChanged, sample, every, startWith } from 'rxjs/operators';
 import googleMapOptions from './google-map.options';
 import { Platform } from '@ionic/angular';
 import { SearchService } from 'src/app/services/search.service';
-import { mapToEventStream, debug, eventHandler } from 'src/app/modules/rxjs-helpers';
+import { mapToEventStream, eventHandler, filterTrue, filterFalse, filterPresent } from 'src/app/modules/rxjs-helpers';
+import { Business } from 'src/app/interfaces/business';
 
 function coordinatesToLatLng(coordinates:Coordinates):ILatLng {
   return <ILatLng>{
@@ -14,6 +15,11 @@ function coordinatesToLatLng(coordinates:Coordinates):ILatLng {
   }
 }
 
+function latlngToMarkerOpts(latlng:ILatLng):MarkerOptions {
+  return  <MarkerOptions>{
+    position: latlng,
+  }
+}
 
 // https://gis.stackexchange.com/a/81390
 function zoomLevelToScale(level:number):number {
@@ -44,6 +50,7 @@ export class GoogleMapComponent implements OnInit {
   platformDimension$: Observable<number>;
 
   setBoundsSubject:Subject<boolean> = new Subject();
+  clearMapSubject:Subject<boolean> = new Subject();
   markersContained$:BehaviorSubject<boolean>= new BehaviorSubject(true);
 
   constructor(
@@ -98,20 +105,39 @@ export class GoogleMapComponent implements OnInit {
 
     const search$ = this.googleMapReady$.pipe(
       switchMapTo(this.searchService.searchSubject),
-    );
-
-    const businesses$ = search$.pipe(
-      pluck("businesses"),
-      startWith([]),
       share(),
     );
-    
-    const latLngBounds$ = businesses$.pipe(
-      switchMap(businesses => of(businesses).pipe(
-        take(1),
-        concatAll(),
+
+    const mapCleared$:Observable<boolean> = search$.pipe(
+      switchMapTo(this.googleMapReady$),
+      switchMap(map => map.clear()),
+      mapTo(true),
+    );
+
+    const businesses$:Observable<Business[]> = zip(search$, mapCleared$).pipe(
+      map(([search]) => search),
+      pluck("businesses"),
+      shareReplay(1),
+    );
+
+    function businessesToMarkerOpts(businesses) {
+      const latlngOpts$ = from(businesses).pipe(
         pluck("coordinates"),
         map(coordinatesToLatLng),
+        map(latlngToMarkerOpts),
+      );
+
+      const names$ = from(businesses).pipe(
+        pluck("name"),
+        map(name => ` ${name}`)
+      );
+
+      return zip(latlngOpts$, names$).pipe(
+        map(([opts, title]) => <MarkerOptions>{...opts, title: title, disableAutoPan: true}),
+        toArray(),
+      )
+    }
+
     const markerOptArray$ = businesses$.pipe(
       switchMap(businessesToMarkerOpts),
     );
