@@ -44,6 +44,7 @@ export class GoogleMapComponent implements OnInit {
   platformDimension$: Observable<number>;
 
   setBoundsSubject:Subject<boolean> = new Subject();
+  markersContained$:BehaviorSubject<boolean>= new BehaviorSubject(true);
 
   constructor(
     private platform: Platform,
@@ -111,26 +112,35 @@ export class GoogleMapComponent implements OnInit {
         concatAll(),
         pluck("coordinates"),
         map(coordinatesToLatLng),
+    const markerOptArray$ = businesses$.pipe(
+      switchMap(businessesToMarkerOpts),
+    );
+
+    const markerArray$ = markerOptArray$.pipe(
+      withLatestFrom(this.googleMap$),
+      switchMap(([opts, mapObject]) => from(opts).pipe(
+        map(opts => mapObject.addMarkerSync(opts)),
+        toArray(),
+      )),
+      shareReplay(1),
+    );
+
+    /* set  bounds */
+
+    const markersLatlngs$ = markerOptArray$.pipe(
+      switchMap(opts => from(opts).pipe(
+        pluck("position"),
         toArray(),
       )),
     );
 
-    /* freeze subject to prevent new searches when map move event is triggered by a bounds redraw */
-
-    const freezeSubject:BehaviorSubject<boolean> = new BehaviorSubject(false);
-
-    /* set  bounds */
-    const mapPositionOpts$ = latLngBounds$.pipe(
-      sample(this.setBoundsSubject),
-      filter(latlngArray => latlngArray.length > 0),
+    const mapPositionOpts$ = this.setBoundsSubject.pipe(
+      switchMapTo(markersLatlngs$),
+      filterPresent(),
       map(latlngArray => <CameraPosition<ILatLng[]>>{ target: latlngArray }),
       map(cameraPosition => <GoogleMapOptions>{ camera: cameraPosition }),
       share(),
     );
-
-    combineLatest(this.googleMapReady$, mapPositionOpts$).pipe(
-      mapTo(true),
-    ).subscribe(freezeSubject);
 
     /* update camera position after each camera move event */
 
@@ -140,35 +150,38 @@ export class GoogleMapComponent implements OnInit {
       share(),
     );
 
-    
-    combineLatest(this.googleMapReady$, mapPositionOpts$).pipe(
-      switchMapTo(
-        cameraMove$.pipe(
-          take(1),
-        )
-      ),
-      mapTo(false),
-      debug('unfreeze'),
-    ).subscribe(freezeSubject);
-
     combineLatest(this.googleMapReady$, mapPositionOpts$).subscribe(
       ([googleMap, cameraPosition]) => googleMap.setOptions(cameraPosition)
     );
 
+    function markersInRegion([markers, visibleRegion]:[Marker[], VisibleRegion]) {
+      return from(markers).pipe(
+        map(marker => marker.getPosition()),
+        every(latlng => visibleRegion.contains(latlng)),
+      );     
+    };
 
-    const freeze$ = freezeSubject.pipe(
-      filter(Boolean),
+    const visibleRegion$ = this.googleMapReady$.pipe(
+      map(googleMap => googleMap.getVisibleRegion()),
     );
 
-    const unfreeze$ = freezeSubject.pipe(
-      filter(freeze => !freeze),
-    );
+    merge(cameraMove$, markerArray$).pipe(
+      switchMapTo(
+        combineLatest(markerArray$, visibleRegion$)
+      ),
+      switchMap(markersInRegion),
+      startWith(true),
+    ).subscribe(this.markersContained$);
     
+    businesses$.pipe(
+      pluck("length"),
+      filterFalse(),
+      mapTo(true),
+    ).subscribe(this.markersContained$);
+
     /* update approximate search radius in meters from current camera position */
 
     cameraMove$.pipe(
-      takeUntil(freeze$),
-      repeatWhen(() => unfreeze$),
       pluck("zoom"),
       distinctUntilChanged(),
       filter<number>(Boolean),
@@ -182,8 +195,6 @@ export class GoogleMapComponent implements OnInit {
     /* update latlng from current camera position */
 
     cameraMove$.pipe(
-      takeUntil(freeze$),
-      repeatWhen(() => unfreeze$),
       pluck("target"),
     ).subscribe(this.searchService.latlngSubject);
   }

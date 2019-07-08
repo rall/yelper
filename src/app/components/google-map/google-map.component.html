@@ -1,3 +1,5 @@
 <div id="map-canvas">
-    <ion-button size="small" (click)="setBoundsSubject.next(true)">bounds</ion-button>
+    <ion-item lines="none">
+        <ion-button size="small" *ngIf="!(markersContained$ | async)" (click)="setBoundsSubject.next(true)">show all markers</ion-button>
+    </ion-item>
 </div>
