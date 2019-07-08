@@ -1,5 +1,5 @@
 import { Observable, fromEventPattern, of } from 'rxjs';
-import { tap, withLatestFrom, switchMap } from 'rxjs/operators';
+import { tap, switchMap, filter } from 'rxjs/operators';
 
 export function debug<T>(message) {
     return tap<T>(val => console.info(message, val), console.error, () => console.log(message, 'COMPLETED'));
@@ -23,3 +23,40 @@ export function mapToEventStream<U>(event:string) {
         );
     }
 };
+
+interface Collection {
+    length: number;
+}
+
+export function filterEmpty<T extends Collection>() {
+    return (observable$: Observable<T>): Observable<T> => {
+        return observable$.pipe(
+            filter<T>(collection => collection.length === 0)
+        );
+    }
+}
+
+export function filterPresent<T extends Collection>() {
+    return (observable$: Observable<T>): Observable<T> => {
+        return observable$.pipe(
+            filter<T>(collection => collection.length > 0)
+        );
+    }
+}
+
+export function filterTrue<T>() {
+    return (observable$: Observable<T>): Observable<T> => {
+        return observable$.pipe(
+            filter<T>(Boolean),
+        );
+    }
+}
+
+export function filterFalse<T>() {
+    return (observable$: Observable<T>): Observable<T> => {
+        return observable$.pipe(
+            filter<T>(val => !val),
+        );
+    }
+}
+
