@@ -7,34 +7,7 @@ import { Platform } from '@ionic/angular';
 import { SearchService } from 'src/app/services/search.service';
 import { mapToEventStream, eventHandler, filterTrue, filterFalse, filterPresent } from 'src/app/modules/rxjs-helpers';
 import { Business } from 'src/app/interfaces/business';
-
-function coordinatesToLatLng(coordinates:Coordinates):ILatLng {
-  return <ILatLng>{
-      lat: coordinates.latitude,
-      lng: coordinates.longitude
-  }
-}
-
-function latlngToMarkerOpts(latlng:ILatLng):MarkerOptions {
-  return  <MarkerOptions>{
-    position: latlng,
-  }
-}
-
-// https://gis.stackexchange.com/a/81390
-function zoomLevelToScale(level:number):number {
-  return 591657550.5 / Math.pow(2, level - 1);
-}
-
-function pixelsToMeters([scale, pixels]:[number, number]):number {
-  const screenInches = pixels / 96;
-  const screenMeters = screenInches * 0.0254;
-  return screenMeters * scale;
-}
-
-function apiRadiusLimit(radius:number):number {
-  return radius > 40000 ? 40000 : radius;
-}
+import { coordinatesToLatLng, latlngToMarkerOpts, zoomLevelToScale, pixelsToMeters, apiRadiusLimit } from 'src/app/modules/geo-helpers';
 
 @Component({
   selector: 'app-google-map',

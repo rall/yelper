@@ -5,17 +5,7 @@ import { YelpService } from '../api/yelp.service';
 import { ILatLng } from '@ionic-native/google-maps/ngx';
 import { SearchData } from '../interfaces/search-data';
 import { debug } from '../modules/rxjs-helpers';
-
-function latLngToCoordinates(latlng:ILatLng):Coordinates {
-  return <Coordinates>{
-      latitude: latlng.lat,
-      longitude: latlng.lng
-  }
-}
-
-function coordinatesEquality(a: Coordinates, b: Coordinates) {
-  return a.latitude === b.latitude && a.longitude === b.longitude;
-}
+import { latLngToCoordinates, coordinatesToLatLng, coordinatesEquality } from '../modules/geo-helpers';
 
 @Injectable({
   providedIn: 'root'
