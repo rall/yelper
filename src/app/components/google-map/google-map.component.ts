@@ -149,7 +149,9 @@ export class GoogleMapComponent implements OnInit {
       share(),
     );
 
-    combineLatest(this.googleMapReady$, mapPositionOpts$).subscribe(
+    combineLatest(this.googleMapReady$, mapPositionOpts$).pipe(
+      sample(this.setBoundsSubject),
+    ).subscribe(
       ([googleMap, cameraPosition]) => googleMap.setOptions(cameraPosition)
     );
 
