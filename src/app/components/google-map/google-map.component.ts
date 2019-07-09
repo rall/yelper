@@ -17,6 +17,7 @@ import { coordinatesToLatLng, latlngToMarkerOpts, zoomLevelToScale, pixelsToMete
 
 export class GoogleMapComponent implements OnInit {
   @Input() pageReadySubject: Subject<boolean>;
+  @Input() results$:Observable<Business[]>;
 
   googleMap$:Observable<GoogleMap>;
   googleMapReady$:Observable<GoogleMap>;
@@ -76,20 +77,15 @@ export class GoogleMapComponent implements OnInit {
 
     hideMap$.subscribe(mapObject => mapObject.setVisible(false));
 
-    const search$ = this.googleMapReady$.pipe(
-      switchMapTo(this.searchService.searchSubject),
-      share(),
-    );
 
-    const mapCleared$:Observable<boolean> = search$.pipe(
+    const mapCleared$:Observable<boolean> = this.results$.pipe(
       switchMapTo(this.googleMapReady$),
       switchMap(map => map.clear()),
       mapTo(true),
     );
 
-    const businesses$:Observable<Business[]> = zip(search$, mapCleared$).pipe(
-      map(([search]) => search),
-      pluck("businesses"),
+    const businesses$:Observable<Business[]> = zip(this.results$, mapCleared$).pipe(
+      map(([results]) => results),
       shareReplay(1),
     );
 
