@@ -1,7 +1,7 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectorRef } from '@angular/core';
 import { Subject, Observable, from, combineLatest, BehaviorSubject, merge, zip } from 'rxjs';
 import { GoogleMaps, GoogleMap, GoogleMapsEvent, ILatLng, CameraPosition, GoogleMapOptions, MarkerOptions, Marker, VisibleRegion } from '@ionic-native/google-maps/ngx';
-import { switchMap, share, mapTo, take, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, distinctUntilChanged, sample, every, startWith } from 'rxjs/operators';
+import { switchMap, share, mapTo, take, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, distinctUntilChanged, sample, every, startWith, debounceTime } from 'rxjs/operators';
 import googleMapOptions from './google-map.options';
 import { Platform } from '@ionic/angular';
 import { SearchService } from 'src/app/services/search.service';
@@ -25,11 +25,15 @@ export class GoogleMapComponent implements OnInit {
 
   setBoundsSubject:Subject<boolean> = new Subject();
   clearMapSubject:Subject<boolean> = new Subject();
+  redoSearchSubject:Subject<boolean> = new Subject();
+
   markersContained$:BehaviorSubject<boolean>= new BehaviorSubject(true);
+  disableRedoButton$:Observable<boolean>;
 
   constructor(
     private platform: Platform,
     private searchService: SearchService,
+    private changeDetectorRef: ChangeDetectorRef
   ) {
     const platformReady$ = from(this.platform.ready());
 
@@ -77,6 +81,17 @@ export class GoogleMapComponent implements OnInit {
 
     hideMap$.subscribe(mapObject => mapObject.setVisible(false));
 
+    this.disableRedoButton$ = this.searchService.redoReadySubject.pipe(
+      startWith(false),
+      map(redo => !redo),
+    );
+
+    this.redoSearchSubject.subscribe(this.searchService.triggerSubject);
+
+    merge(this.markersContained$, this.disableRedoButton$).pipe(
+      debounceTime(100),
+      mapTo(this.changeDetectorRef),
+    ).subscribe(ref => ref.detectChanges());
 
     const mapCleared$:Observable<boolean> = this.results$.pipe(
       switchMapTo(this.googleMapReady$),
@@ -129,8 +144,7 @@ export class GoogleMapComponent implements OnInit {
       )),
     );
 
-    const mapPositionOpts$ = this.setBoundsSubject.pipe(
-      switchMapTo(markersLatlngs$),
+    const mapPositionOpts$ = markersLatlngs$.pipe(
       filterPresent(),
       map(latlngArray => <CameraPosition<ILatLng[]>>{ target: latlngArray }),
       map(cameraPosition => <GoogleMapOptions>{ camera: cameraPosition }),

@@ -1,5 +1,8 @@
 <div id="map-canvas">
     <ion-item lines="none">
-        <ion-button size="small" *ngIf="!(markersContained$ | async)" (click)="setBoundsSubject.next(true)">show all markers</ion-button>
+        <ion-button size="small" [disabled]="markersContained$ | async" (click)="setBoundsSubject.next(true)">show all markers</ion-button>
+    </ion-item>
+    <ion-item lines="none">
+        <ion-button size="small" [disabled]="disableRedoButton$ | async" (click)="redoSearchSubject.next(true)">redo search here</ion-button>
     </ion-item>
 </div>
