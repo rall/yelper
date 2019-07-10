@@ -6,7 +6,7 @@ import googleMapOptions from './google-map.options';
 import { Platform } from '@ionic/angular';
 import { mapToEventStream, eventHandler, filterTrue, filterFalse, filterPresent, debug } from 'src/app/helpers/rxjs-helpers';
 import { Business } from 'src/app/interfaces/business';
-import { coordinatesToLatLng, latlngToMarkerOpts, zoomLevelToScale, pixelsToMeters, apiRadiusLimit } from 'src/app/helpers/geo-helpers';
+import { coordinatesToLatLng, latlngToMarkerOpts, apiRadiusLimit, positionToMetersPerPx } from 'src/app/helpers/geo-helpers';
 
 @Component({
   selector: 'app-google-map',
