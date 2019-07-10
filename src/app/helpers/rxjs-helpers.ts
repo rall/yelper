@@ -14,8 +14,8 @@ interface EventTarget {
     removeEventListener: Function;
 }
 
-export function eventHandler<T extends EventTarget>(target: T, type:string): Observable<any> {
-    const add = handler => target.addEventListener(type).subscribe(handler);
+export function eventHandler<T extends EventTarget>(target: T, eventName:string): Observable<any> {
+    const add = handler => target.addEventListener(eventName).subscribe(handler);
     const remove = handler => target.removeEventListener(handler);
     return fromEventPattern(add, remove);
 }
