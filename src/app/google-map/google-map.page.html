@@ -5,6 +5,11 @@
 </ion-header>
 
 <ion-content>
-  <app-google-map [pageReadySubject]="readySubject" [results$]="results$">
+  <app-google-map [pageReadySubject]="readySubject" 
+                  [results$]="results$" 
+                  [allowRedo$]="allowRedo$" 
+                  [radius]="searchService.radiusSubject" 
+                  [latlng]="searchService.latlngSubject" 
+                  (redoSearch)="onRedoSearch(true)">
   </app-google-map>
- </ion-content>
+</ion-content>

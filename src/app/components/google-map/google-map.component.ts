@@ -1,11 +1,10 @@
-import { Component, OnInit, Input, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectorRef, Output } from '@angular/core';
 import { Subject, Observable, from, combineLatest, BehaviorSubject, merge, zip } from 'rxjs';
 import { GoogleMaps, GoogleMap, GoogleMapsEvent, ILatLng, CameraPosition, GoogleMapOptions, MarkerOptions, Marker, VisibleRegion } from '@ionic-native/google-maps/ngx';
 import { switchMap, share, mapTo, take, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, distinctUntilChanged, sample, every, startWith, debounceTime } from 'rxjs/operators';
 import googleMapOptions from './google-map.options';
 import { Platform } from '@ionic/angular';
-import { SearchService } from 'src/app/services/search.service';
-import { mapToEventStream, eventHandler, filterTrue, filterFalse, filterPresent } from 'src/app/modules/rxjs-helpers';
+import { mapToEventStream, eventHandler, filterTrue, filterFalse, filterPresent, debug } from 'src/app/modules/rxjs-helpers';
 import { Business } from 'src/app/interfaces/business';
 import { coordinatesToLatLng, latlngToMarkerOpts, zoomLevelToScale, pixelsToMeters, apiRadiusLimit } from 'src/app/modules/geo-helpers';
 
@@ -17,7 +16,11 @@ import { coordinatesToLatLng, latlngToMarkerOpts, zoomLevelToScale, pixelsToMete
 
 export class GoogleMapComponent implements OnInit {
   @Input() pageReadySubject: Subject<boolean>;
-  @Input() results$:Observable<Business[]>;
+  @Input() results$: Observable<Business[]>;
+  @Input() allowRedo$: Observable<boolean>;
+  @Input() radius:Subject<number>;
+  @Input() latlng:Subject<ILatLng>;
+  @Output() redoSearch:Subject<boolean> = new Subject();
 
   googleMap$:Observable<GoogleMap>;
   googleMapReady$:Observable<GoogleMap>;
@@ -25,14 +28,12 @@ export class GoogleMapComponent implements OnInit {
 
   setBoundsSubject:Subject<boolean> = new Subject();
   clearMapSubject:Subject<boolean> = new Subject();
-  redoSearchSubject:Subject<boolean> = new Subject();
 
   markersContained$:BehaviorSubject<boolean>= new BehaviorSubject(true);
   disableRedoButton$:Observable<boolean>;
 
   constructor(
     private platform: Platform,
-    private searchService: SearchService,
     private changeDetectorRef: ChangeDetectorRef
   ) {
     const platformReady$ = from(this.platform.ready());
@@ -81,12 +82,10 @@ export class GoogleMapComponent implements OnInit {
 
     hideMap$.subscribe(mapObject => mapObject.setVisible(false));
 
-    this.disableRedoButton$ = this.searchService.redoReadySubject.pipe(
+    this.disableRedoButton$ = this.allowRedo$.pipe(
       startWith(false),
       map(redo => !redo),
     );
-
-    this.redoSearchSubject.subscribe(this.searchService.triggerSubject);
 
     merge(this.markersContained$, this.disableRedoButton$).pipe(
       debounceTime(100),
@@ -201,12 +200,17 @@ export class GoogleMapComponent implements OnInit {
       map(pixelsToMeters),
       map(Math.round),
       map(apiRadiusLimit),
-    ).subscribe(this.searchService.radiusSubject);
+    ).subscribe(this.radius);
 
     /* update latlng from current camera position */
 
     cameraMove$.pipe(
       pluck("target"),
-    ).subscribe(this.searchService.latlngSubject);
+    ).subscribe(this.latlng);
+
+  }
+
+  onRedoSearch() {
+    this.redoSearch.next(true);   
   }
 }
