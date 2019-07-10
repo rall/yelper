@@ -55,7 +55,7 @@ export class SearchService {
 
     // the radius at the time of the last search
     const currentRadius$ = radius$.pipe(
-      sample(this.searchSubject),
+      sample(this.triggerSubject),
     );
 
     const radiusDelta$ = combineLatest(currentRadius$, radius$).pipe(
