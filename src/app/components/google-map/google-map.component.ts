@@ -180,10 +180,12 @@ export class GoogleMapComponent implements OnInit {
       share(),
     );
 
-    combineLatest(this.googleMapReady$, mapPositionOpts$).pipe(
+    combineLatest(mapPositionOpts$, cameraMove$).pipe(
+      map(([opts]) => opts),
       sample(this.setBoundsSubject),
+      withLatestFrom(this.googleMapReady$),
     ).subscribe(
-      ([googleMap, cameraPosition]) => googleMap.setOptions(cameraPosition)
+      ([cameraPosition, googleMap]) => googleMap.setOptions(cameraPosition)
     );
 
     function markersInRegion([markers, visibleRegion]:[Marker[], VisibleRegion]) {
