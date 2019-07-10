@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { SearchService } from 'src/app/services/search.service';
-import { Observable, Subject } from 'rxjs';
-import { distinctUntilChanged, sample } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'app-search',

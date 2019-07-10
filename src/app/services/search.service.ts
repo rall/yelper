@@ -4,8 +4,8 @@ import { distinctUntilChanged, switchMap, map, sample, pluck, filter, mapTo, wit
 import { YelpService } from '../api/yelp.service';
 import { ILatLng, Spherical } from '@ionic-native/google-maps/ngx';
 import { SearchData } from '../interfaces/search-data';
-import { debug } from '../modules/rxjs-helpers';
-import { latLngToCoordinates, coordinatesToLatLng, coordinatesEquality } from '../modules/geo-helpers';
+import { debug } from '../helpers/rxjs-helpers';
+import { latLngToCoordinates, coordinatesToLatLng, coordinatesEquality } from '../helpers/geo-helpers';
 
 @Injectable({
   providedIn: 'root'

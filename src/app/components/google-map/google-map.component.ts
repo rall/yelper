@@ -4,9 +4,9 @@ import { GoogleMaps, GoogleMap, GoogleMapsEvent, ILatLng, CameraPosition, Google
 import { switchMap, share, mapTo, take, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, distinctUntilChanged, sample, every, startWith, debounceTime } from 'rxjs/operators';
 import googleMapOptions from './google-map.options';
 import { Platform } from '@ionic/angular';
-import { mapToEventStream, eventHandler, filterTrue, filterFalse, filterPresent, debug } from 'src/app/modules/rxjs-helpers';
+import { mapToEventStream, eventHandler, filterTrue, filterFalse, filterPresent, debug } from 'src/app/helpers/rxjs-helpers';
 import { Business } from 'src/app/interfaces/business';
-import { coordinatesToLatLng, latlngToMarkerOpts, zoomLevelToScale, pixelsToMeters, apiRadiusLimit } from 'src/app/modules/geo-helpers';
+import { coordinatesToLatLng, latlngToMarkerOpts, zoomLevelToScale, pixelsToMeters, apiRadiusLimit } from 'src/app/helpers/geo-helpers';
 
 @Component({
   selector: 'app-google-map',
