@@ -214,13 +214,10 @@ export class GoogleMapComponent implements OnInit {
     /* update approximate search radius in meters from current camera position */
 
     cameraMove$.pipe(
-      pluck("zoom"),
-      distinctUntilChanged(),
-      filterTrue(),
-      map(zoomLevelToScale),
+      map(positionToMetersPerPx),
       withLatestFrom(this.platformDimension$),
-      map(pixelsToMeters),
-      map(Math.round),
+      map(([scale, pixels]:[number, number]) => scale * pixels),
+      map(diameter => Math.round(diameter/2)),
       map(apiRadiusLimit),
     ).subscribe(this.radius);
 
