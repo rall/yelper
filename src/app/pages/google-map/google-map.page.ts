@@ -17,6 +17,7 @@ export class GoogleMapPage implements OnInit {
 
   radiusSubject: Subject<number> = new Subject();
   latlngSubject: Subject<ILatLng> = new Subject();
+  indexSubject: Subject<number> = new Subject();
 
   constructor(
     private searchService: SearchService,

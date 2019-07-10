@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, ChangeDetectorRef, Output } from '@angular/core';
 import { Subject, Observable, from, combineLatest, BehaviorSubject, merge, zip } from 'rxjs';
 import { GoogleMaps, GoogleMap, GoogleMapsEvent, ILatLng, CameraPosition, GoogleMapOptions, MarkerOptions, Marker, VisibleRegion } from '@ionic-native/google-maps/ngx';
-import { switchMap, share, mapTo, take, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, distinctUntilChanged, sample, every, startWith, debounceTime } from 'rxjs/operators';
+import { switchMap, share, mapTo, take, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, distinctUntilChanged, sample, every, startWith, debounceTime, concatAll, mergeMap } from 'rxjs/operators';
 import googleMapOptions from './google-map.options';
 import { Platform } from '@ionic/angular';
 import { mapToEventStream, eventHandler, filterTrue, filterFalse, filterPresent, debug } from 'src/app/helpers/rxjs-helpers';
@@ -20,6 +20,7 @@ export class GoogleMapComponent implements OnInit {
   @Input() allowRedo$: Observable<boolean>;
   @Input() radius:Subject<number>;
   @Input() latlng:Subject<ILatLng>;
+  @Input() index:Subject<number>;
   @Output() redoSearch:Subject<boolean> = new Subject();
 
   googleMap$:Observable<GoogleMap>;
@@ -134,6 +135,19 @@ export class GoogleMapComponent implements OnInit {
       shareReplay(1),
     );
 
+    const markerClicks$ = markerArray$.pipe(
+      concatAll(),
+      mergeMap(marker => eventHandler(marker, GoogleMapsEvent.MARKER_CLICK)),
+      share(),
+    )
+    
+    markerClicks$.pipe(
+      map(([_, marker]:[ILatLng, Marker]) => marker),
+      withLatestFrom(markerArray$),
+      map(([marker, ary]) => ary.indexOf(marker))
+    ).subscribe(this.index);
+
+
     /* set  bounds */
 
     const markersLatlngs$ = markerOptArray$.pipe(
@@ -141,7 +155,15 @@ export class GoogleMapComponent implements OnInit {
         pluck("position"),
         toArray(),
       )),
+      share(),
     );
+
+    this.index.pipe(
+      withLatestFrom(markersLatlngs$),
+      map(([idx, array]) => array[idx]),
+      map(latlng => <CameraPosition<ILatLng>>{ target: latlng, duration: 100 }),
+      withLatestFrom(this.googleMapReady$),
+    ).subscribe(([position, mapObject]) => mapObject.animateCamera(position));
 
     const mapPositionOpts$ = markersLatlngs$.pipe(
       filterPresent(),
