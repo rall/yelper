@@ -43,6 +43,7 @@ export class SearchService {
       debug('search'),
     ).subscribe(this.searchSubject);
 
+    // the latlng from last search taken from the search data object
     const currentLatLng$ = this.searchSubject.pipe(
       pluck("region", "center"),
       map(coordinatesToLatLng),
@@ -52,6 +53,7 @@ export class SearchService {
       map(([a,b]) => Spherical.computeDistanceBetween(a, b)),
     );
 
+    // the radius at the time of the last search
     const currentRadius$ = radius$.pipe(
       sample(this.searchSubject),
     );
@@ -60,13 +62,9 @@ export class SearchService {
       map(([a, b]) => Math.abs(a - b)),
     );
 
-    const lastRadius$:Observable<number> = radius$.pipe(
-      sample(this.triggerSubject),
-    );
-
     merge(latLngDelta$, radiusDelta$).pipe(
-      withLatestFrom(lastRadius$),
-      filter(([delta, lastRadius]) => delta > (lastRadius / 2)),
+      withLatestFrom(currentRadius$),
+      filter(([delta, currentRadius]) => delta > (currentRadius / 2)),
       mapTo(true),
     ).subscribe(this.redoReadySubject);
 
