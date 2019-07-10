@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Subject, Observable } from 'rxjs';
-import { Business } from '../interfaces/business';
-import { SearchService } from '../services/search.service';
+import { Business } from '../../interfaces/business';
+import { SearchService } from '../../services/search.service';
 import { pluck } from 'rxjs/operators';
 import { ILatLng } from '@ionic-native/google-maps/ngx';
 
