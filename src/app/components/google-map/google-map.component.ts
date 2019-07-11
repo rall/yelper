@@ -1,10 +1,10 @@
 import { Component, OnInit, Input, ChangeDetectorRef, Output } from '@angular/core';
 import { Subject, Observable, from, combineLatest, BehaviorSubject, merge, zip } from 'rxjs';
 import { GoogleMaps, GoogleMap, GoogleMapsEvent, ILatLng, CameraPosition, GoogleMapOptions, MarkerOptions, Marker, VisibleRegion } from '@ionic-native/google-maps/ngx';
-import { switchMap, share, mapTo, take, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, distinctUntilChanged, sample, every, startWith, debounceTime, concatAll, mergeMap } from 'rxjs/operators';
+import { switchMap, share, mapTo, take, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, sample, every, startWith, debounceTime, concatAll, mergeMap } from 'rxjs/operators';
 import googleMapOptions from './google-map.options';
 import { Platform } from '@ionic/angular';
-import { mapToEventStream, eventHandler, filterTrue, filterFalse, filterPresent, debug } from 'src/app/helpers/rxjs-helpers';
+import { eventHandler, filterTrue, filterFalse, filterPresent, debug } from 'src/app/helpers/rxjs-helpers';
 import { Business } from 'src/app/interfaces/business';
 import { coordinatesToLatLng, latlngToMarkerOpts, apiRadiusLimit, positionToMetersPerPx } from 'src/app/helpers/geo-helpers';
 
@@ -23,7 +23,6 @@ export class GoogleMapComponent implements OnInit {
   @Input() index:Subject<number>;
   @Output() redoSearch:Subject<boolean> = new Subject();
 
-  googleMap$:Observable<GoogleMap>;
   googleMapReady$:Observable<GoogleMap>;
   platformDimension$: Observable<number>;
 
@@ -39,9 +38,9 @@ export class GoogleMapComponent implements OnInit {
   ) {
     const platformReady$ = from(this.platform.ready());
 
-    this.googleMap$ = platformReady$.pipe(
-      mapTo(GoogleMaps.create(googleMapOptions)),
-      take(1),
+    this.googleMapReady$ = platformReady$.pipe(
+      mapTo(GoogleMaps.create({})),
+      switchMap(mapObject => eventHandler(mapObject, GoogleMapsEvent.MAP_READY, true)),
       shareReplay(1),
     );
 
@@ -49,23 +48,14 @@ export class GoogleMapComponent implements OnInit {
       mapTo(Math.min(this.platform.height(), this.platform.width())),
       shareReplay(1),
     );
-    
-    const readyEvent$ = this.googleMap$.pipe(
-      map(mapObject => eventHandler(mapObject, GoogleMapsEvent.MAP_READY)),
-    );
-
-    this.googleMapReady$ = this.googleMap$.pipe(
-      sample(readyEvent$),
-      shareReplay(1),
-    );
-
-    this.googleMapReady$.subscribe(mapObject => mapObject.setOptions(googleMapOptions));
   }
 
   ngOnInit() {
+    this.googleMapReady$.subscribe(mapObject => mapObject.setOptions(googleMapOptions));
+
     const showMap$ = this.pageReadySubject.pipe(
       filterTrue(),
-      switchMapTo(this.googleMap$),
+      switchMapTo(this.googleMapReady$),
       share(),
     );
 
@@ -75,7 +65,7 @@ export class GoogleMapComponent implements OnInit {
 
     const hideMap$ = this.pageReadySubject.pipe(
       filterFalse(),
-      switchMapTo(this.googleMap$),
+      switchMapTo(this.googleMapReady$),
       share(),
     );
 
@@ -127,7 +117,7 @@ export class GoogleMapComponent implements OnInit {
     );
 
     const markerArray$ = markerOptArray$.pipe(
-      withLatestFrom(this.googleMap$),
+      withLatestFrom(this.googleMapReady$),
       switchMap(([opts, mapObject]) => from(opts).pipe(
         map(opts => mapObject.addMarkerSync(opts)),
         toArray(),

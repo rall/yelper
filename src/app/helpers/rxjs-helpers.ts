@@ -1,5 +1,5 @@
 import { Observable, fromEventPattern } from 'rxjs';
-import { tap, switchMap, filter } from 'rxjs/operators';
+import { tap, switchMap, filter, map, mapTo } from 'rxjs/operators';
 
 export function debug<T>(message:any) {
     return (observable$: Observable<T>): Observable<T> => {
@@ -14,10 +14,12 @@ interface EventTarget {
     removeEventListener: Function;
 }
 
-export function eventHandler<T extends EventTarget>(target: T, eventName:string): Observable<any> {
-    const add = handler => target.addEventListener(eventName).subscribe(handler);
+export function eventHandler<T extends EventTarget, U>(target: T, type:string, returnTarget: boolean = false): Observable<any> {
+    const add = handler => target.addEventListener(type).subscribe(handler);
     const remove = handler => target.removeEventListener(handler);
-    return fromEventPattern(add, remove);
+    return fromEventPattern(add, remove).pipe(
+        map(payload => returnTarget ? target : payload)
+    );
 }
 
 interface Collection {
