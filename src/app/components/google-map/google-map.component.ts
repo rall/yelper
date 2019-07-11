@@ -159,7 +159,6 @@ export class GoogleMapComponent implements OnInit {
       filterPresent(),
       map(latlngArray => <CameraPosition<ILatLng[]>>{ target: latlngArray }),
       map(cameraPosition => <GoogleMapOptions>{ camera: cameraPosition }),
-      share(),
     );
 
     /* update camera position after each camera move event */
