@@ -19,14 +19,6 @@ export function eventHandler<T extends EventTarget>(target: T, eventName:string)
     const remove = handler => target.removeEventListener(handler);
     return fromEventPattern(add, remove);
 }
-  
-export function mapToEventStream<U>(event:string) {
-    return <T extends EventTarget>(observable$: Observable<T>): Observable<U> => {
-        return observable$.pipe(
-            switchMap(source => eventHandler(source, event)),
-        );
-    }
-};
 
 interface Collection {
     length: number;

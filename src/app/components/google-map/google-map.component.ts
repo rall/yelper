@@ -174,8 +174,8 @@ export class GoogleMapComponent implements OnInit {
 
     /* update camera position after each camera move event */
 
-    const cameraMove$:Observable<CameraPosition<ILatLng>> = this.googleMap$.pipe(
-      mapToEventStream<[CameraPosition<ILatLng>, any]>(GoogleMapsEvent.CAMERA_MOVE_END),
+    const cameraMove$:Observable<CameraPosition<ILatLng>> = this.googleMapReady$.pipe(
+      switchMap(googleMap => eventHandler(googleMap, GoogleMapsEvent.CAMERA_MOVE_END)),
       map(([position]) => position),
       share(),
     );
