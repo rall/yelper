@@ -116,7 +116,7 @@ export class GoogleMapComponent implements OnInit {
       switchMap(businessesToMarkerOpts),
     );
 
-    const markerArray$ = markerOptArray$.pipe(
+    const markerArray$:Observable<Marker[]> = markerOptArray$.pipe(
       withLatestFrom(this.googleMapReady$),
       switchMap(([opts, mapObject]) => from(opts).pipe(
         map(opts => mapObject.addMarkerSync(opts)),
@@ -125,14 +125,14 @@ export class GoogleMapComponent implements OnInit {
       shareReplay(1),
     );
 
-    const markerClicks$ = markerArray$.pipe(
+    const markerClicks$:Observable<[ILatLng, Marker]> = markerArray$.pipe(
       concatAll(),
       mergeMap(marker => eventHandler(marker, GoogleMapsEvent.MARKER_CLICK)),
       share(),
     )
     
     markerClicks$.pipe(
-      map(([_, marker]:[ILatLng, Marker]) => marker),
+      map(([_, marker]) => marker),
       withLatestFrom(markerArray$),
       map(([marker, ary]) => ary.indexOf(marker))
     ).subscribe(this.index);
