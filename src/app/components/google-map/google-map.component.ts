@@ -145,7 +145,7 @@ export class GoogleMapComponent implements OnInit {
         pluck("position"),
         toArray(),
       )),
-      share(),
+      shareReplay(1),
     );
 
     this.index.pipe(
