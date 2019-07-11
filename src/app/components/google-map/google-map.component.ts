@@ -85,7 +85,7 @@ export class GoogleMapComponent implements OnInit {
 
     const mapCleared$:Observable<boolean> = this.results$.pipe(
       switchMapTo(this.googleMapReady$),
-      switchMap(map => map.clear()),
+      switchMap(googleMap => googleMap.clear()),
       mapTo(true),
     );
 
