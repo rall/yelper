@@ -1,5 +1,5 @@
-import { Component, OnInit, Input, ChangeDetectorRef, Output } from '@angular/core';
-import { Subject, Observable, from, combineLatest, BehaviorSubject, merge, zip } from 'rxjs';
+import { Component, OnInit, Input, ChangeDetectorRef, Output, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Subject, Observable, from, combineLatest, BehaviorSubject, merge, zip, fromEvent } from 'rxjs';
 import { GoogleMaps, GoogleMap, GoogleMapsEvent, ILatLng, CameraPosition, GoogleMapOptions, MarkerOptions, Marker, VisibleRegion } from '@ionic-native/google-maps/ngx';
 import { switchMap, share, mapTo, take, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, sample, every, startWith, debounceTime, concatAll, mergeMap } from 'rxjs/operators';
 import googleMapOptions from './google-map.options';
@@ -14,15 +14,18 @@ import { coordinatesToLatLng, latlngToMarkerOpts, apiRadiusLimit, positionToMete
   styleUrls: ['./google-map.component.scss'],
 })
 
-export class GoogleMapComponent implements OnInit {
+export class GoogleMapComponent implements OnInit, AfterViewInit {
+  @ViewChild("redo", { read: ElementRef }) OuputSubjectButton:ElementRef;
+
   @Input() pageReadySubject: Subject<boolean>;
   @Input() results$: Observable<Business[]>;
   @Input() allowRedo$: Observable<boolean>;
   @Input() radius:Subject<number>;
   @Input() latlng:Subject<ILatLng>;
   @Input() index:Subject<number>;
-  @Output() redoSearch:Subject<boolean> = new Subject();
 
+  @Output() redoSearchOutputSubject:Subject<boolean> = new Subject();
+  
   googleMapReady$:Observable<GoogleMap>;
   platformDimension$: Observable<number>;
 
@@ -48,6 +51,12 @@ export class GoogleMapComponent implements OnInit {
       mapTo(Math.min(this.platform.height(), this.platform.width())),
       shareReplay(1),
     );
+  }
+
+  ngAfterViewInit() {
+    fromEvent(this.OuputSubjectButton.nativeElement, "click").pipe(
+      mapTo(true),
+    ).subscribe(this.redoSearchOutputSubject);
   }
 
   ngOnInit() {

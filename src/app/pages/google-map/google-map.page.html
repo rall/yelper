@@ -11,6 +11,6 @@
                   [radius]="searchService.radiusSubject" 
                   [latlng]="searchService.latlngSubject" 
                   [index]="indexSubject"
-                  (redoSearch)="onRedoSearch(true)">
+                  (redoSearchOutputSubject)="onRedoSearch($event)">
   </app-google-map>
 </ion-content>

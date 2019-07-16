@@ -32,6 +32,10 @@ export class GoogleMapPage implements OnInit {
     this.latlngSubject.subscribe(this.searchService.latlngSubject);
   }
 
+  onRedoSearch(val:boolean) {
+    this.searchService.triggerSubject.next(val)
+  }
+
   ionViewDidEnter() {
     this.readySubject.next(true);
   }
