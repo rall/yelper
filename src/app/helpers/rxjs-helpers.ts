@@ -1,5 +1,5 @@
 import { Observable, fromEventPattern } from 'rxjs';
-import { tap, switchMap, filter, map, mapTo } from 'rxjs/operators';
+import { tap, switchMap, filter, map, mapTo, withLatestFrom } from 'rxjs/operators';
 
 export function debug<T>(message:any) {
     return (observable$: Observable<T>): Observable<T> => {
@@ -58,3 +58,11 @@ export function filterFalse<T>() {
     }
 }
 
+export function selectIn<T, U>(collection$: Observable<T>) {
+    return (observable$: Observable<string|number>) => {
+        return observable$.pipe(
+            withLatestFrom(collection$),
+            map<[string | number, T], U>(([prop, collection]) => collection[prop]),
+        );
+    }
+}

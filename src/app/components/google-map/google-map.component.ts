@@ -1,10 +1,10 @@
 import { Component, OnInit, Input, ChangeDetectorRef, Output, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { Subject, Observable, from, combineLatest, BehaviorSubject, merge, zip, fromEvent } from 'rxjs';
 import { GoogleMaps, GoogleMap, GoogleMapsEvent, ILatLng, CameraPosition, GoogleMapOptions, MarkerOptions, Marker, VisibleRegion } from '@ionic-native/google-maps/ngx';
-import { switchMap, share, mapTo, take, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, sample, every, startWith, debounceTime, concatAll, mergeMap } from 'rxjs/operators';
+import { switchMap, share, mapTo, take, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, sample, every, startWith, debounceTime, concatAll, mergeMap, pairwise } from 'rxjs/operators';
 import googleMapOptions from './google-map.options';
 import { Platform } from '@ionic/angular';
-import { eventHandler, filterTrue, filterFalse, filterPresent, debug } from 'src/app/helpers/rxjs-helpers';
+import { eventHandler, filterTrue, filterFalse, filterPresent, debug, selectIn } from 'src/app/helpers/rxjs-helpers';
 import { Business } from 'src/app/interfaces/business';
 import { coordinatesToLatLng, latlngToMarkerOpts, apiRadiusLimit, positionToMetersPerPx } from 'src/app/helpers/geo-helpers';
 
@@ -22,7 +22,7 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
   @Input() allowRedo$: Observable<boolean>;
   @Input() radius:Subject<number>;
   @Input() latlng:Subject<ILatLng>;
-  @Input() index:Subject<number>;
+  @Input() index:BehaviorSubject<number>;
 
   @Output() redoSearchOutputSubject:Subject<boolean> = new Subject();
   
@@ -146,6 +146,12 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
       map(([marker, ary]) => ary.indexOf(marker))
     ).subscribe(this.index);
 
+    markerClicks$.pipe(
+      switchMapTo(this.googleMapReady$),
+      switchMap(googleMap => eventHandler(googleMap, GoogleMapsEvent.MAP_CLICK)),
+      mapTo(-1),
+    ).subscribe(this.index);
+
 
     /* set  bounds */
 
@@ -170,6 +176,27 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
       map(cameraPosition => <GoogleMapOptions>{ camera: cameraPosition }),
     );
 
+
+    /* track current and previous markers */
+
+    const pair$:Observable<number[]> = this.index.pipe(
+      pairwise(),
+      share(),
+    );
+
+    const currentMarker$:Observable<Marker> = pair$.pipe(
+      map(([_, current]) => current),
+      selectIn(markerArray$),
+      debug<Marker>('current'),
+    );
+
+    const previousMarker$:Observable<Marker> = pair$.pipe(
+      map(([previous]) => previous),
+      selectIn(markerArray$),
+      debug<Marker>('previous'),
+    );
+    
+    merge(currentMarker$, previousMarker$).subscribe();
     /* update camera position after each camera move event */
 
     const cameraMove$:Observable<CameraPosition<ILatLng>> = this.googleMapReady$.pipe(
@@ -230,6 +257,4 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
   }
 
   onRedoSearch() {
-    this.redoSearch.next(true);   
-  }
 }
