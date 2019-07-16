@@ -12,5 +12,6 @@
                   [latlng]="searchService.latlngSubject" 
                   [index]="indexSubject"
                   (redoSearchOutputSubject)="onRedoSearch($event)">
+    <app-slides [results$]="results$" [index]="indexSubject"></app-slides>
   </app-google-map>
 </ion-content>
