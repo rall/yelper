@@ -43,8 +43,4 @@ export class GoogleMapPage implements OnInit {
   ionViewWillLeave() {
     this.readySubject.next(false);
   }
-
-  onRedoSearch(arg) {
-    this.searchService.triggerSubject.next(true);
-  }
 }
