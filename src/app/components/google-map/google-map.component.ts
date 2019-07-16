@@ -256,5 +256,4 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
 
   }
 
-  onRedoSearch() {
 }
