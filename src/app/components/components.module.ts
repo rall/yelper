@@ -4,11 +4,15 @@ import { GoogleMapComponent } from './google-map/google-map.component';
 import { IonicModule } from '@ionic/angular';
 import { SearchComponent } from './search/search.component';
 import { ReactiveFormsModule } from '@angular/forms';
+import { BusinessComponent } from './business/business.component';
+import { SlidesComponent } from './slides/slides.component';
 
 @NgModule({
   declarations: [
     GoogleMapComponent,
-    SearchComponent
+    SearchComponent,
+    BusinessComponent,
+    SlidesComponent,
   ],
   imports: [
     CommonModule,
@@ -17,7 +21,9 @@ import { ReactiveFormsModule } from '@angular/forms';
   ],
   exports: [
     GoogleMapComponent,
-    SearchComponent
+    SearchComponent,
+    BusinessComponent,
+    SlidesComponent,
   ]
 })
 export class ComponentsModule { }
