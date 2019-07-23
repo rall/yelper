@@ -6,11 +6,12 @@ import { pluck } from 'rxjs/operators';
 import { ILatLng } from '@ionic-native/google-maps/ngx';
 
 @Component({
-  selector: 'app-google-map-page',
-  templateUrl: 'google-map.page.html',
-  styleUrls: ['google-map.page.scss'],
+  selector: 'app-business-finder-page',
+  templateUrl: 'business-finder.page.html',
+  styleUrls: ['business-finder.page.scss'],
 })
-export class GoogleMapPage implements OnInit {
+export class BusinessFinderPage implements OnInit {
+
   readySubject: Subject<boolean> = new Subject();
   results$: Observable<Business[]>;
   allowRedo$: Observable<boolean>;

@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
-  selector: 'app-search',
+  selector: 'bf-search',
   templateUrl: './search.component.html',
   styleUrls: ['./search.component.scss'],
 })

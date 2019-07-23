@@ -6,7 +6,7 @@ import { mapTo, switchMap, distinctUntilChanged, share, filter, map } from 'rxjs
 import { debug } from 'src/app/helpers/rxjs-helpers';
 
 @Component({
-  selector: 'app-slides',
+  selector: 'bf-slides',
   templateUrl: './slides.component.html',
   styleUrls: ['./slides.component.scss'],
 })

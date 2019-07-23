@@ -9,7 +9,7 @@ import { Business } from 'src/app/interfaces/business';
 import { coordinatesToLatLng, latlngToMarkerOpts, apiRadiusLimit, positionToMetersPerPx } from 'src/app/helpers/geo-helpers';
 
 @Component({
-  selector: 'app-google-map',
+  selector: 'bf-google-map',
   templateUrl: './google-map.component.html',
   styleUrls: ['./google-map.component.scss'],
 })

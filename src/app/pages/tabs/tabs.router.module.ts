@@ -17,11 +17,11 @@ const routes: Routes = [
         ]
       },
       {
-        path: 'google-map',
+        path: 'business-finder',
         children: [
           {
             path: '',
-            loadChildren: '../google-map/google-map.module#GoogleMapPageModule'
+            loadChildren: '../business-finder/business-finder.module#BusinessFinderPageModule'
           }
         ]
       },

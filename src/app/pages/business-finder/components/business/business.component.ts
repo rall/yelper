@@ -2,7 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { Business } from 'src/app/interfaces/business';
 
 @Component({
-  selector: 'app-business',
+  selector: 'bf-business',
   templateUrl: './business.component.html',
   styleUrls: ['./business.component.scss'],
 })

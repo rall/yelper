@@ -1,17 +1,17 @@
 <ion-header>
   <ion-toolbar>
-    <app-search></app-search>
+    <bf-search></bf-search>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
-  <app-google-map [pageReadySubject]="readySubject" 
+  <bf-google-map [pageReadySubject]="readySubject" 
                   [results$]="results$" 
                   [allowRedo$]="allowRedo$" 
                   [radius]="searchService.radiusSubject" 
                   [latlng]="searchService.latlngSubject" 
                   [index]="indexSubject"
                   (redoSearchOutputSubject)="onRedoSearch($event)">
-    <app-slides [results$]="results$" [index]="indexSubject"></app-slides>
-  </app-google-map>
+    <bf-slides [results$]="results$" [index]="indexSubject"></bf-slides>
+  </bf-google-map>
 </ion-content>

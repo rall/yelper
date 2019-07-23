@@ -1,21 +1,21 @@
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { GoogleMapPage } from './google-map.page';
+import { BusinessFinderPage } from './business-finder.page';
 
 describe('GoogleMapPage', () => {
-  let component: GoogleMapPage;
-  let fixture: ComponentFixture<GoogleMapPage>;
+  let component: BusinessFinderPage;
+  let fixture: ComponentFixture<BusinessFinderPage>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [GoogleMapPage],
+      declarations: [BusinessFinderPage],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
     }).compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(GoogleMapPage);
+    fixture = TestBed.createComponent(BusinessFinderPage);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
