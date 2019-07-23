@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Subject, Observable } from 'rxjs';
+import { Subject, Observable, BehaviorSubject } from 'rxjs';
 import { Business } from '../../interfaces/business';
 import { SearchService } from '../../services/search.service';
 import { pluck } from 'rxjs/operators';
@@ -18,7 +18,7 @@ export class BusinessFinderPage implements OnInit {
 
   radiusSubject: Subject<number> = new Subject();
   latlngSubject: Subject<ILatLng> = new Subject();
-  indexSubject: Subject<number> = new Subject();
+  indexSubject: BehaviorSubject<number> = new BehaviorSubject(-1);
 
   constructor(
     private searchService: SearchService,
