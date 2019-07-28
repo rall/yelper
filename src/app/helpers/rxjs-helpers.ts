@@ -18,7 +18,7 @@ export function eventHandler<T extends EventTarget, U>(target: T, type:string, r
     const add = handler => target.addEventListener(type).subscribe(handler);
     const remove = handler => target.removeEventListener(handler);
     return fromEventPattern(add, remove).pipe(
-        map(payload => returnTarget ? target : payload)
+        map<T, T>(payload => returnTarget ? target : payload)
     );
 }
 
