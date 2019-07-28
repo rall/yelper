@@ -9,6 +9,7 @@ import { ILatLng } from '@ionic-native/google-maps/ngx';
   selector: 'app-business-finder-page',
   templateUrl: 'business-finder.page.html',
   styleUrls: ['business-finder.page.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BusinessFinderPage implements OnInit {
 
