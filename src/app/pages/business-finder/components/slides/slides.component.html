@@ -1,5 +1,0 @@
-<ion-slides #slides slidesPerView="1.1" spaceBetween="8" (ionSlideDidChange)="slideDidChange()">
-  <ion-slide *ngFor="let item of results$ | async" tappable (click)="slideTap(item)">
-    <bf-business [business]="item"></bf-business>
-  </ion-slide>
-</ion-slides>
