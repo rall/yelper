@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, ChangeDetectorRef, Output, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { Subject, Observable, from, combineLatest, BehaviorSubject, merge, zip, fromEvent } from 'rxjs';
 import { GoogleMaps, GoogleMap, GoogleMapsEvent, ILatLng, CameraPosition, GoogleMapOptions, MarkerOptions, Marker, VisibleRegion } from '@ionic-native/google-maps/ngx';
-import { switchMap, share, mapTo, take, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, sample, every, startWith, debounceTime, concatAll, mergeMap, pairwise } from 'rxjs/operators';
+import { switchMap, share, mapTo, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, sample, every, startWith, debounceTime, concatAll, mergeMap, pairwise, concatMap, filter } from 'rxjs/operators';
 import googleMapOptions from './google-map.options';
 import { Platform } from '@ionic/angular';
 import { eventHandler, filterTrue, filterFalse, filterPresent, debug, selectIn } from 'src/app/helpers/rxjs-helpers';
@@ -15,7 +15,7 @@ import { coordinatesToLatLng, latlngToMarkerOpts, apiRadiusLimit, positionToMete
 })
 
 export class GoogleMapComponent implements OnInit, AfterViewInit {
-  @ViewChild("redo", { read: ElementRef }) OuputSubjectButton:ElementRef;
+  @ViewChild("redo", { read: ElementRef }) ouputSubjectButton:ElementRef;
 
   @Input() pageReadySubject: Subject<boolean>;
   @Input() results$: Observable<Business[]>;
@@ -23,8 +23,13 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
   @Input() radius:Subject<number>;
   @Input() latlng:Subject<ILatLng>;
   @Input() index:BehaviorSubject<number>;
+  @Input() pad$:Observable<number>;
 
-  @Output() redoSearchOutputSubject:Subject<boolean> = new Subject();
+  redoSearchSubject: Subject<boolean> = new Subject();
+  @Output() redoSearch$:Observable<boolean> = this.redoSearchSubject.asObservable();
+
+  markerIndexSubject: Subject<number> = new Subject();
+  @Output() index$:Observable<number> = this.markerIndexSubject.asObservable();
   
   googleMapReady$:Observable<GoogleMap>;
   platformDimension$: Observable<number>;
@@ -54,33 +59,20 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    fromEvent(this.OuputSubjectButton.nativeElement, "click").pipe(
+    fromEvent(this.ouputSubjectButton.nativeElement, "click").pipe(
       mapTo(true),
-    ).subscribe(this.redoSearchOutputSubject);
+    ).subscribe(this.redoSearchSubject);
   }
 
   ngOnInit() {
     this.googleMapReady$.subscribe(mapObject => mapObject.setOptions(googleMapOptions));
 
-    const showMap$ = this.pageReadySubject.pipe(
-      filterTrue(),
-      switchMapTo(this.googleMapReady$),
-      share(),
+    const showMap$ = combineLatest(this.googleMapReady$, this.pageReadySubject).pipe(
+      share(),  
     );
 
-    showMap$.subscribe(mapObject => mapObject.setVisible(true));
-
-    showMap$.subscribe(mapObject => mapObject.setDiv('map-canvas'));
-
-    const hideMap$ = this.pageReadySubject.pipe(
-      filterFalse(),
-      switchMapTo(this.googleMapReady$),
-      share(),
-    );
-
-    hideMap$.subscribe(mapObject => mapObject.setDiv());
-
-    hideMap$.subscribe(mapObject => mapObject.setVisible(false));
+    showMap$.subscribe(([mapObject, visible]) => mapObject.setDiv(visible ? 'map-canvas' : undefined));
+    showMap$.subscribe(([mapObject, visible]) => mapObject.setVisible(visible));
 
     this.disableRedoButton$ = this.allowRedo$.pipe(
       startWith(false),
@@ -104,19 +96,28 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
     );
 
     function businessesToMarkerOpts(businesses) {
-      const latlngOpts$ = from(businesses).pipe(
+      const business$ = from(businesses).pipe(
+        share()
+      );
+
+      const latlngOpts$ = business$.pipe(
         pluck("coordinates"),
         map(coordinatesToLatLng),
         map(latlngToMarkerOpts),
       );
 
-      const names$ = from(businesses).pipe(
+      const names$ = business$.pipe(
         pluck("name"),
         map(name => ` ${name}`)
       );
 
-      return zip(latlngOpts$, names$).pipe(
-        map(([opts, title]) => <MarkerOptions>{...opts, title: title, disableAutoPan: true}),
+      const category$ = business$.pipe(
+        pluck<Business, any[]>("categories"),
+        map(categories => categories.map(cat => cat.alias))
+      );
+
+      return zip(latlngOpts$, names$, category$).pipe(
+        map(([opts, title]) => <MarkerOptions>{ ...opts, title: title, snippet: "snippy" }),
         toArray(),
       )
     }
@@ -140,18 +141,18 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
       share(),
     )
     
-    markerClicks$.pipe(
-      map(([_, marker]) => marker),
-      withLatestFrom(markerArray$),
-      map(([marker, ary]) => ary.indexOf(marker))
-    ).subscribe(this.index);
 
-    markerClicks$.pipe(
-      switchMapTo(this.googleMapReady$),
-      switchMap(googleMap => eventHandler(googleMap, GoogleMapsEvent.MAP_CLICK)),
-      mapTo(-1),
-    ).subscribe(this.index);
-
+    merge(
+      markerClicks$.pipe(
+        map(([_, marker]) => marker),
+        withLatestFrom(markerArray$),
+        map(([marker, ary]) => ary.indexOf(marker))
+      ),
+      this.googleMapReady$.pipe(
+        switchMap(googleMap => eventHandler(googleMap, GoogleMapsEvent.MAP_CLICK)),
+        mapTo(-1),
+      )
+    ).subscribe(this.markerIndexSubject);
 
     /* set  bounds */
 
@@ -162,13 +163,6 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
       )),
       shareReplay(1),
     );
-
-    this.index.pipe(
-      withLatestFrom(markersLatlngs$),
-      map(([idx, array]) => array[idx]),
-      map(latlng => <CameraPosition<ILatLng>>{ target: latlng, duration: 100 }),
-      withLatestFrom(this.googleMapReady$),
-    ).subscribe(([position, mapObject]) => mapObject.animateCamera(position));
 
     const mapPositionOpts$ = markersLatlngs$.pipe(
       filterPresent(),
@@ -187,16 +181,42 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
     const currentMarker$:Observable<Marker> = pair$.pipe(
       map(([_, current]) => current),
       selectIn(markerArray$),
-      debug<Marker>('current'),
+      filterTrue<Marker>(),
+      share(),
     );
 
     const previousMarker$:Observable<Marker> = pair$.pipe(
       map(([previous]) => previous),
       selectIn(markerArray$),
-      debug<Marker>('previous'),
+      filterTrue<Marker>(),
+      share(),
+    );
+
+    const currentBusiness$:Observable<Business> = pair$.pipe(
+      map(([_, current]) => current),
+      selectIn(businesses$),
+      filterTrue<Business>(),
+      share(),
+    );
+
+    const previousBusiness$:Observable<Business> = pair$.pipe(
+      map(([_, current]) => current),
+      selectIn(businesses$),
+      filterTrue<Business>(),
+      share(),
     );
     
-    merge(currentMarker$, previousMarker$).subscribe();
+    const zoomToCurrentMarker$ = currentMarker$.pipe(
+      map(marker => [ marker.getMap(), marker.getPosition()]),
+      concatMap(([mapObject, position]) => mapObject.animateCamera({ target: position, duration: 100 })),
+    );
+
+    zip(currentMarker$, zoomToCurrentMarker$).pipe(
+      map(([marker]) => marker),
+      filter(marker => !marker.isInfoWindowShown()),
+    ).subscribe(marker => marker.showInfoWindow());
+
+
     /* update camera position after each camera move event */
 
     const cameraMove$:Observable<CameraPosition<ILatLng>> = this.googleMapReady$.pipe(
@@ -254,6 +274,12 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
       pluck("target"),
     ).subscribe(this.latlng);
 
+    /* Set the map bottom padding to make room for the slides */
+
+    this.pad$.pipe(
+      map(pad => [0, pad, 0]),
+      withLatestFrom(this.googleMapReady$),
+    ).subscribe(([pad, googlemap]) => googlemap.setPadding(0, ...pad));
   }
 
 }

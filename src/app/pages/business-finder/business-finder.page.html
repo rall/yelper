@@ -4,14 +4,17 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
+<ion-content no-bounce>
   <bf-google-map [pageReadySubject]="readySubject" 
-                  [results$]="results$" 
-                  [allowRedo$]="allowRedo$" 
-                  [radius]="searchService.radiusSubject" 
-                  [latlng]="searchService.latlngSubject" 
-                  [index]="indexSubject"
-                  (redoSearchOutputSubject)="onRedoSearch($event)">
-    <bf-slides [results$]="results$" [index]="indexSubject"></bf-slides>
+                 [results$]="results$" 
+                 [allowRedo$]="allowRedo$" 
+                 [radius]="searchService.radiusSubject" 
+                 [latlng]="searchService.latlngSubject" 
+                 [index]="indexSubject"
+                 [pad$]="offset$"
+                 (redoSearch$)="onRedoSearch($event)"
+                 (index$)="onMarkerClick($event)">
   </bf-google-map>
 </ion-content>
+
+<bf-list #listresults [hidden]="noResults$ | async" [containerHeight$]="offsetHeight$" [results$]="results$" (height$)="onHeightChange($event)"></bf-list>

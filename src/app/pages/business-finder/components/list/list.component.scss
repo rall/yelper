@@ -1,0 +1,11 @@
+:host {
+    width: 100%;
+    position: absolute;
+    display: block;
+    top: calc(100% - 20px);
+    background: white;
+    opacity: 0.8;
+    #draghandle {
+        color: red;
+    }
+}

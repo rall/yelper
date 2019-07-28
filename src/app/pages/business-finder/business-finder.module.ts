@@ -6,8 +6,9 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BusinessFinderPage } from './business-finder.page';
 import { SearchComponent } from './components/search/search.component';
 import { BusinessComponent } from './components/business/business.component';
-import { SlidesComponent } from './components/slides/slides.component';
 import { GoogleMapModule } from './components/google-map/google-map.module';
+import { ListComponent } from './components/list/list.component';
+import { AttributeMutationsModule } from './services/attribute-mutations.module';
 
 @NgModule({
   imports: [
@@ -17,12 +18,13 @@ import { GoogleMapModule } from './components/google-map/google-map.module';
     ReactiveFormsModule,
     RouterModule.forChild([{ path: '', component: BusinessFinderPage }]),
     GoogleMapModule,
+    AttributeMutationsModule,
   ],
   declarations: [
     BusinessFinderPage,
     SearchComponent,
     BusinessComponent,
-    SlidesComponent,
+    ListComponent,
   ]
 })
 export class BusinessFinderPageModule {}
