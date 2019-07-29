@@ -58,11 +58,11 @@ export function filterFalse<T>() {
     }
 }
 
-export function selectIn<T, U>(collection$: Observable<T>) {
-    return (observable$: Observable<string|number>) => {
+export function selectIn<T>(collection$: Observable<T>) {
+    return (observable$: Observable<keyof T>) => {
         return observable$.pipe(
             withLatestFrom(collection$),
-            map<[string | number, T], U>(([prop, collection]) => collection[prop]),
+            map(([prop, collection]) => collection[prop]),
         );
     }
 }
