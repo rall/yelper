@@ -28,6 +28,8 @@ export class ListComponent implements OnInit {
   ) { }
   
   ngOnInit() {
+    // TODO use UI scheduler
+
     const containerHeight$ = this.containerHeight$.pipe(
       shareReplay(1),
     );

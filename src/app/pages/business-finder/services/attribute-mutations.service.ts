@@ -11,7 +11,7 @@ import { debug } from 'src/app/helpers/rxjs-helpers';
 export class AttributeMutationsService {
     constructor() {
     }
-
+    // TODO add teardown/unsubscribe
     create(element: ElementRef, attribute: string) {
         const mutationSubject = new Subject();
         const mutationObserver = new MutationObserver((mutations: MutationRecord[]) => mutationSubject.next(mutations));
