@@ -37,10 +37,8 @@ export class SearchService {
     const getBusinesses = this.yelp.getBusinesses.bind(this.yelp);
 
     combineLatest(term$, latlng$, radius$).pipe(
-      debug('params'),
       sample(this.triggerSubject),
       switchMap(getBusinesses),
-      debug('search'),
     ).subscribe(this.searchSubject);
 
     // the latlng from last search taken from the search data object
