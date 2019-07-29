@@ -29,6 +29,9 @@ export class BusinessFinderPage implements OnInit, AfterContentChecked {
   private indexSubject: BehaviorSubject<number> = new BehaviorSubject(-1);
   index$: Observable<number> = this.indexSubject.asObservable();
 
+  identifyIndexSubject:Subject<number> = new Subject();
+  showIndexSubject:Subject<number> = new Subject();
+
   offsetHeightSubject:Subject<number> = new Subject;
   offsetHeight$ = this.offsetHeightSubject.pipe(
     distinctUntilChanged(),
@@ -83,5 +86,15 @@ export class BusinessFinderPage implements OnInit, AfterContentChecked {
 
   onHeightChange(height: number) {
     this.offsetSubject.next(height);
+  }
+
+  onIdentifyIndex(index: number) {
+    this.identifyIndexSubject.next(index);
+    console.log("identify", index);
+  }
+
+  onShowIndex(index:number) {
+    this.showIndexSubject.next(index);
+    console.log("show", index);
   }
 }

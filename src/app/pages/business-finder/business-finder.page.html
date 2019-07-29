@@ -10,11 +10,20 @@
                  [allowRedo$]="allowRedo$" 
                  [radius]="searchService.radiusSubject" 
                  [latlng]="searchService.latlngSubject" 
-                 [index]="indexSubject"
                  [pad$]="offset$"
+                 [identifyIndex]="identifyIndexSubject"
+                 [showIndex]="showIndexSubject"
                  (redoSearch$)="onRedoSearch($event)"
                  (index$)="onMarkerClick($event)">
   </bf-google-map>
 </ion-content>
 
-<bf-list #listresults [hidden]="noResults$ | async" [containerHeight$]="offsetHeight$" [results$]="results$" (height$)="onHeightChange($event)"></bf-list>
+<bf-list #listresults 
+        [hidden]="noResults$ | async"
+        [containerHeight$]="offsetHeight$"
+        [results$]="results$"
+        (height$)="onHeightChange($event)"
+        [selectedIndex$]="index$"
+        (identifyIndex$)="onIdentifyIndex($event)"
+        (showIndex$)="onShowIndex($event)">
+</bf-list>

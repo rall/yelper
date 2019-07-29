@@ -8,4 +8,10 @@
     #draghandle {
         color: red;
     }
+
+    ion-list {
+        ion-item.selected {
+            background: lightgray;
+        }
+    }
 }

@@ -1,7 +1,8 @@
 <div #draghandle id="draghandle" text-center>RESULTS</div>
 <ion-content>
   <ion-list>
-    <ion-item *ngFor="let item of (results$ | async)" tappable (click)="itemTap(item)">
+    <ion-item *ngFor="let item of (results$ | async); let idx = index" button (click)="onItemClick(idx)">
+      <ion-ripple-effect></ion-ripple-effect>
       <bf-business [business]="item"></bf-business>
     </ion-item>
   </ion-list>
