@@ -30,7 +30,6 @@ export class ListComponent implements OnInit {
   @HostBinding("style.top.px") top: number;
 
   itemsQueryListSubject:Subject<QueryList<ElementRef>> = new Subject();
-  itemSelectedFromListSubject:Subject<number> = new Subject();
   selectedElementSubject:Subject<number> = new Subject();
 
   @ViewChild("draghandle") handle: ElementRef;
@@ -134,6 +133,8 @@ export class ListComponent implements OnInit {
 
     const selectedElementSubject: Subject<ElementRef> = new Subject
 
+    // map clicks
+
     this.clicks$.pipe(
       filter<ClickEvent>(event => event.event === "mapclick"),
       map(evt => evt.index),
@@ -142,21 +143,27 @@ export class ListComponent implements OnInit {
       tap<ElementRef>(elementRef => elementRef.nativeElement.scrollIntoView())
     ).subscribe(selectedElementSubject);
 
-    this.itemSelectedFromListSubject.pipe(
+
+    // list clicks
+
+    this.clicks$.pipe(
+      filter<ClickEvent>(event => event.event === "click"),
+      map(evt => evt.index),
       selectIn(itemsArray$),
+      filter<ElementRef>(elementRef => Boolean(elementRef && elementRef.nativeElement)),
     ).subscribe(selectedElementSubject);
 
     selectedElementSubject.pipe(
       pairwise(),
     ).subscribe(
       ([previous, current]) => {
-        this.renderer.addClass(current.nativeElement, "selected");
         this.renderer.removeClass(previous.nativeElement, "selected");
+        this.renderer.addClass(current.nativeElement, "selected");
       }
     );
 
 
-    // track double clicks
+    // simulate double clicks
 
     this.clickTrackerSubject.pipe(
       buffer(this.clickTrackerSubject.
