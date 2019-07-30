@@ -1,10 +1,10 @@
 import { Component, OnInit, Input, HostBinding, ViewChild, ElementRef, Output, ViewChildren, QueryList, Renderer2 } from '@angular/core';
-import { Observable, fromEvent, Subject, combineLatest, animationFrameScheduler, asapScheduler } from 'rxjs';
+import { Observable, fromEvent, Subject, combineLatest } from 'rxjs';
 import { Business } from 'src/app/interfaces/business';
-import { pluck, withLatestFrom, map, pairwise, filter, share, takeUntil, exhaustMap, shareReplay, startWith, distinctUntilChanged, tap, throttleTime, buffer } from 'rxjs/operators';
+import { pluck, withLatestFrom, map, pairwise, filter, share, takeUntil, exhaustMap, shareReplay, startWith, tap, throttleTime, buffer } from 'rxjs/operators';
 import { AttributeMutationsService } from '../../services/attribute-mutations.service';
 import { IonItem } from '@ionic/angular';
-import { debug, selectIn } from 'src/app/helpers/rxjs-helpers';
+import { selectIn, filterTrue } from 'src/app/helpers/rxjs-helpers';
 import { ClickEvent } from 'src/app/interfaces/click-event';
 
 @Component({
@@ -30,8 +30,7 @@ export class ListComponent implements OnInit {
   @HostBinding("style.top.px") top: number;
 
   itemsQueryListSubject:Subject<QueryList<ElementRef>> = new Subject();
-  selectedElementSubject:Subject<number> = new Subject();
-
+  
   @ViewChild("draghandle") handle: ElementRef;
 
   private _items: QueryList<ElementRef>;
@@ -153,14 +152,20 @@ export class ListComponent implements OnInit {
       filter<ElementRef>(elementRef => Boolean(elementRef && elementRef.nativeElement)),
     ).subscribe(selectedElementSubject);
 
-    selectedElementSubject.pipe(
+    const selectedPair$ = selectedElementSubject.pipe(
+      startWith(undefined),
       pairwise(),
-    ).subscribe(
-      ([previous, current]) => {
-        this.renderer.removeClass(previous.nativeElement, "selected");
-        this.renderer.addClass(current.nativeElement, "selected");
-      }
+      share(),
     );
+    
+    selectedPair$.pipe(
+      map(([previous]) => previous),
+      filterTrue(),
+    ).subscribe(element => this.renderer.removeClass(element.nativeElement, "selected"));
+
+    selectedPair$.pipe(
+      map(([_, current]) => current),
+    ).subscribe(element => this.renderer.addClass(element.nativeElement, "selected"));
 
 
     // simulate double clicks
