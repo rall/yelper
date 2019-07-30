@@ -7,6 +7,7 @@ import { Platform } from '@ionic/angular';
 import { eventHandler, filterTrue, filterFalse, filterPresent, debug, selectIn } from 'src/app/helpers/rxjs-helpers';
 import { Business } from 'src/app/interfaces/business';
 import { coordinatesToLatLng, latlngToMarkerOpts, apiRadiusLimit, positionToMetersPerPx } from 'src/app/helpers/geo-helpers';
+import { ClickEvent } from 'src/app/interfaces/click-event';
 
 @Component({
   selector: 'bf-google-map',
@@ -22,15 +23,14 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
   @Input() allowRedo$: Observable<boolean>;
   @Input() radius:Subject<number>;
   @Input() latlng:Subject<ILatLng>;
-  @Input() identifyIndex:BehaviorSubject<number>;
-  @Input() showIndex:BehaviorSubject<number>;
+  @Input() clicks$:Observable<ClickEvent>;
   @Input() pad$:Observable<number>;
 
   redoSearchSubject: Subject<boolean> = new Subject();
   @Output() redoSearch$:Observable<boolean> = this.redoSearchSubject.asObservable();
 
-  markerIndexSubject: Subject<number> = new Subject();
-  @Output() index$:Observable<number> = this.markerIndexSubject.asObservable();
+  mapClickSubject: Subject<ClickEvent> = new Subject();
+  @Output() clickTracker$:Observable<ClickEvent> = this.mapClickSubject.asObservable();
   
   googleMapReady$:Observable<GoogleMap>;
   platformDimension$: Observable<number>;
@@ -156,9 +156,9 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
         map(([marker, ary]) => ary.indexOf(marker))
       ),
       mapClick$
-    ).subscribe(this.markerIndexSubject);
-
-    mapClick$.subscribe(this.identifyIndex)
+    ).pipe(
+      map(index => <ClickEvent>{event: "mapclick", index: index})
+    ).subscribe(this.mapClickSubject);
 
     /* set  bounds */
 
@@ -179,10 +179,22 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
 
     /* track current and previous markers to identify by displaying info window */
 
-    const identifyPair$:Observable<number[]> = this.identifyIndex.pipe(
+    const identifyPair$:Observable<number[]> = this.clicks$.pipe(
+      filter<ClickEvent>(event => event.event === "click"),
+      map(evt => evt.index),
+      debounceTime(200),
+      startWith(-1),
       pairwise(),
       share(),
     );
+
+    identifyPair$.pipe(
+      filter(([previous, current]) => previous !== current),
+      map(([previous]) => previous),
+      selectIn(markerArray$),
+      filterTrue<Marker>(),
+      filter(marker => marker.isInfoWindowShown()),
+    ).subscribe(marker => marker.hideInfoWindow());
 
     identifyPair$.pipe(
       map(([_, current]) => current),
@@ -191,50 +203,18 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
       filter(marker => !marker.isInfoWindowShown()),
     ).subscribe(marker => marker.showInfoWindow());
 
-    identifyPair$.pipe(
-      map(([previous]) => previous),
-      selectIn(markerArray$),
-      filterTrue<Marker>(),
-      filter(marker => marker.isInfoWindowShown()),
-    ).subscribe(marker => marker.hideInfoWindow());
-
     /* show current markers by zooming to location */
 
-    this.showIndex.pipe(
+
+    this.clicks$.pipe(
+      filter<ClickEvent>(event => event.event === "doubleclick"),
+      map(evt => evt.index),
       selectIn(markerArray$),
       filterTrue<Marker>(),
       map(marker => [ marker.getMap(), marker.getPosition()]),
       switchMap(([mapObject, position]:[GoogleMap, ILatLng]) => mapObject.animateCamera(<CameraPosition<ILatLng>>{ target: position, zoom: 19, duration: 200 })),
     ).subscribe();
 
-
-   
-    // previousMarker$.pipe(
-    //   // delay(100),
-    //   // filter(marker => marker.isInfoWindowShown()),
-    //   tap((marker) => marker.setTitle(null)),
-    // ).subscribe(marker => marker.hideInfoWindow());
-
-    // const zoomToCurrentMarker$ = currentMarker$.pipe(
-    //   map(marker => [ marker.getMap(), marker.getPosition()]),
-    //   concatMap(([mapObject, position]) => mapObject.animateCamera({ target: position, duration: 100 })),
-    // );
-
-    // this.identifyIndex.pipe(
-    //   filter(i => i > -1),
-    //   withLatestFrom(markersLatlngs$),
-    //   map(([idx, array]) => array[idx]),
-    //   map(latlng => <CameraPosition<ILatLng>>{ target: latlng, duration: 100 }),
-    //   withLatestFrom(this.googleMapReady$),
-    // ).subscribe(([position, mapObject]) => mapObject.animateCamera(position));
-
-
-    // zip(currentMarker$, currentBusiness$, zoomToCurrentMarker$).pipe(
-    //   debug('zip'),
-    //   tap(([marker, business]) => marker.setTitle(business.name)),
-    //   map(([marker]) => marker),
-    //   filter(marker => !marker.isInfoWindowShown()),
-    // ).subscribe(marker => marker.showInfoWindow());
 
 
     /* update camera position after each camera move event */

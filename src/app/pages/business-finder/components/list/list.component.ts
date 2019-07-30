@@ -1,10 +1,11 @@
 import { Component, OnInit, Input, HostBinding, ViewChild, ElementRef, Output, ViewChildren, QueryList, Renderer2 } from '@angular/core';
 import { Observable, fromEvent, Subject, combineLatest, animationFrameScheduler, asapScheduler } from 'rxjs';
 import { Business } from 'src/app/interfaces/business';
-import { pluck, withLatestFrom, map, pairwise, filter, share, takeUntil, exhaustMap, shareReplay, startWith, distinctUntilChanged, tap, throttleTime } from 'rxjs/operators';
+import { pluck, withLatestFrom, map, pairwise, filter, share, takeUntil, exhaustMap, shareReplay, startWith, distinctUntilChanged, tap, throttleTime, buffer } from 'rxjs/operators';
 import { AttributeMutationsService } from '../../services/attribute-mutations.service';
 import { IonItem } from '@ionic/angular';
 import { debug, selectIn } from 'src/app/helpers/rxjs-helpers';
+import { ClickEvent } from 'src/app/interfaces/click-event';
 
 @Component({
   selector: 'bf-list',
@@ -14,7 +15,7 @@ import { debug, selectIn } from 'src/app/helpers/rxjs-helpers';
 export class ListComponent implements OnInit {
   @Input() results$:Observable<Business[]>;
   @Input() containerHeight$:Observable<number>;
-  @Input() selectedIndex$:Observable<number>;
+  @Input() clicks$:Observable<ClickEvent>;
 
   heightSubject:Subject<number> = new Subject();
   @Output() height$:Observable<number> = this.heightSubject.asObservable();
@@ -22,8 +23,8 @@ export class ListComponent implements OnInit {
   identifyIndexSubject:Subject<number> = new Subject();
   @Output() identifyIndex$:Observable<number> = this.identifyIndexSubject.asObservable();
   
-  showIndexSubject:Subject<number> = new Subject();
-  @Output() showIndex$:Observable<number> = this.showIndexSubject.asObservable();
+  clickTrackerSubject:Subject<ClickEvent> = new Subject();
+  @Output() clickTracker$:Observable<ClickEvent> = this.clickTrackerSubject.asObservable();
   
   @HostBinding("style.height.px") height: number;
   @HostBinding("style.top.px") top: number;
@@ -133,7 +134,9 @@ export class ListComponent implements OnInit {
 
     const selectedElementSubject: Subject<ElementRef> = new Subject
 
-    this.selectedIndex$.pipe(
+    this.clicks$.pipe(
+      filter<ClickEvent>(event => event.event === "mapclick"),
+      map(evt => evt.index),
       selectIn(itemsArray$),
       filter<ElementRef>(elementRef => Boolean(elementRef && elementRef.nativeElement)),
       tap<ElementRef>(elementRef => elementRef.nativeElement.scrollIntoView())
@@ -151,14 +154,24 @@ export class ListComponent implements OnInit {
         this.renderer.removeClass(previous.nativeElement, "selected");
       }
     );
+
+
+    // track double clicks
+
+    this.clickTrackerSubject.pipe(
+      buffer(this.clickTrackerSubject.
+          pipe(
+            throttleTime(250)
+          )
+        ),
+      filter<ClickEvent[]>(ary => ary.length > 1),
+      filter(([a, b]) => a.index === b.index),
+      map(([event]) => <ClickEvent>{ event: "doubleclick", index: event.index })
+    ).subscribe(this.clickTrackerSubject);
   }
 
-  private onItemClick(index: number) {
-    this.identifyIndexSubject.next(index);
-  }
-  
-  private onItemDoubleclick(index: number) {
-    this.showIndexSubject.next(index);
+  private onItemClick(evt, index: number) {
+    this.clickTrackerSubject.next({ event: evt.type, index: index })
   }
 
   private reduceImage(url: string):string {

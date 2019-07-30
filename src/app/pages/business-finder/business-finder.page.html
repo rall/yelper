@@ -11,10 +11,9 @@
                  [radius]="searchService.radiusSubject" 
                  [latlng]="searchService.latlngSubject" 
                  [pad$]="offset$"
-                 [identifyIndex]="identifyIndexSubject"
-                 [showIndex]="showIndexSubject"
                  (redoSearch$)="onRedoSearch($event)"
-                 (index$)="onMarkerClick($event)">
+                 [clicks$]="clickTracker$"
+                 (clickTracker$)="onClick($event)">
   </bf-google-map>
 </ion-content>
 
@@ -23,7 +22,6 @@
         [containerHeight$]="offsetHeight$"
         [results$]="results$"
         (height$)="onHeightChange($event)"
-        [selectedIndex$]="index$"
-        (identifyIndex$)="onIdentifyIndex($event)"
-        (showIndex$)="onShowIndex($event)">
+        [clicks$]="clickTracker$"
+        (clickTracker$)="onClick($event)">
 </bf-list>

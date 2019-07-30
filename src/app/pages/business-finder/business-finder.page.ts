@@ -4,7 +4,8 @@ import { Business } from '../../interfaces/business';
 import { SearchService } from '../../services/search.service';
 import { pluck, map, share, distinctUntilChanged, mapTo, startWith } from 'rxjs/operators';
 import { ILatLng } from '@ionic-native/google-maps/ngx';
-import { filterTrue } from 'src/app/helpers/rxjs-helpers';
+import { filterTrue, debug } from 'src/app/helpers/rxjs-helpers';
+import { ClickEvent } from 'src/app/interfaces/click-event';
 
 @Component({
   selector: 'app-business-finder-page',
@@ -25,12 +26,9 @@ export class BusinessFinderPage implements OnInit, AfterContentChecked {
 
   private offsetSubject: Subject<number> = new Subject();
   offset$:Observable<number> = this.offsetSubject.asObservable();
-  
-  private indexSubject: BehaviorSubject<number> = new BehaviorSubject(-1);
-  index$: Observable<number> = this.indexSubject.asObservable();
 
-  identifyIndexSubject:Subject<number> = new Subject();
-  showIndexSubject:Subject<number> = new Subject();
+  private clickTrackerSubject:Subject<ClickEvent> = new Subject();
+  clickTracker$:Observable<ClickEvent> = this.clickTrackerSubject.asObservable();
 
   offsetHeightSubject:Subject<number> = new Subject;
   offsetHeight$ = this.offsetHeightSubject.pipe(
@@ -71,11 +69,6 @@ export class BusinessFinderPage implements OnInit, AfterContentChecked {
     this.searchService.triggerSubject.next(val)
   }
 
-  onMarkerClick(idx:number) {
-    console.log('marker click', idx);
-    this.indexSubject.next(idx);
-  }
-
   ionViewWillEnter() {
     this.readySubject.next(true);
   }
@@ -88,13 +81,7 @@ export class BusinessFinderPage implements OnInit, AfterContentChecked {
     this.offsetSubject.next(height);
   }
 
-  onIdentifyIndex(index: number) {
-    this.identifyIndexSubject.next(index);
-    console.log("identify", index);
-  }
-
-  onShowIndex(index:number) {
-    this.showIndexSubject.next(index);
-    console.log("show", index);
+  onClick(event:ClickEvent) {
+    this.clickTrackerSubject.next(event);
   }
 }
