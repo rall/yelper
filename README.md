@@ -7,6 +7,6 @@ To run this, you'll need API keys for [Yelp Fusion](https://www.yelp.com/develop
 To get around the Yelp API's CORS settings, this demo uses the Cordova "Advanced HTTP plugin"
 
 
-## An inartfully greated animated demo
+## An inartfully created animated demo
 
 ![demo](yelper-demo.gif)
