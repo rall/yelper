@@ -6,6 +6,7 @@ To run this, you'll need API keys for [Yelp Fusion](https://www.yelp.com/develop
 
 To get around the Yelp API's CORS settings, this demo uses the Cordova "Advanced HTTP plugin"
 
+I used the Ionic tabs starter app for this because one of the issues with using the native maps plugin shows up in page transitions. I wanted to verify I could move from tab to tab without any unusual visual artifacts.
 
 ## An inartfully created animated demo
 
