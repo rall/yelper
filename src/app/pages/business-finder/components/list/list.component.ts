@@ -6,6 +6,7 @@ import { AttributeMutationsService } from '../../services/attribute-mutations.se
 import { IonItem } from '@ionic/angular';
 import { selectIn, filterTrue } from 'src/app/helpers/rxjs-helpers';
 import { ClickEvent } from 'src/app/interfaces/click-event';
+import { clicksToDoubleclicks } from './rxjs.helpers';
 
 @Component({
   selector: 'bf-list',
@@ -169,16 +170,8 @@ export class ListComponent implements OnInit {
 
 
     // simulate double clicks
-
     this.clickTrackerSubject.pipe(
-      buffer(this.clickTrackerSubject.
-          pipe(
-            throttleTime(250)
-          )
-        ),
-      filter<ClickEvent[]>(ary => ary.length > 1),
-      filter(([a, b]) => a.index === b.index),
-      map(([event]) => <ClickEvent>{ event: "doubleclick", index: event.index })
+      clicksToDoubleclicks()
     ).subscribe(this.clickTrackerSubject);
   }
 
