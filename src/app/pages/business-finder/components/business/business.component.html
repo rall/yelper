@@ -1,5 +1,6 @@
-<p>
+<ion-label>
     {{ business.name }}
-    {{ business.price }}
-    {{ business.rating }}
-</p>
+</ion-label>
+<ion-note>
+    {{ business.location.display_address.join(", ") }}
+</ion-note>

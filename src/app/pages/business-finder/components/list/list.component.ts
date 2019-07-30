@@ -1,7 +1,7 @@
-import { Component, OnInit, Input, HostBinding, ViewChild, ElementRef, Output, ViewChildren, QueryList, AfterViewChecked, Renderer2 } from '@angular/core';
-import { Observable, fromEvent, Subject, combineLatest } from 'rxjs';
+import { Component, OnInit, Input, HostBinding, ViewChild, ElementRef, Output, ViewChildren, QueryList, Renderer2 } from '@angular/core';
+import { Observable, fromEvent, Subject, combineLatest, animationFrameScheduler, asapScheduler } from 'rxjs';
 import { Business } from 'src/app/interfaces/business';
-import { pluck, withLatestFrom, map, pairwise, filter, share, takeUntil, exhaustMap, shareReplay, startWith, distinctUntilChanged, tap } from 'rxjs/operators';
+import { pluck, withLatestFrom, map, pairwise, filter, share, takeUntil, exhaustMap, shareReplay, startWith, distinctUntilChanged, tap, throttleTime } from 'rxjs/operators';
 import { AttributeMutationsService } from '../../services/attribute-mutations.service';
 import { IonItem } from '@ionic/angular';
 import { debug, selectIn } from 'src/app/helpers/rxjs-helpers';
@@ -11,7 +11,7 @@ import { debug, selectIn } from 'src/app/helpers/rxjs-helpers';
   templateUrl: './list.component.html',
   styleUrls: ['./list.component.scss'],
 })
-export class ListComponent implements OnInit, AfterViewChecked {
+export class ListComponent implements OnInit {
   @Input() results$:Observable<Business[]>;
   @Input() containerHeight$:Observable<number>;
   @Input() selectedIndex$:Observable<number>;
@@ -30,6 +30,7 @@ export class ListComponent implements OnInit, AfterViewChecked {
 
   itemsQueryListSubject:Subject<QueryList<ElementRef>> = new Subject();
   itemSelectedFromListSubject:Subject<number> = new Subject();
+  selectedElementSubject:Subject<number> = new Subject();
 
   @ViewChild("draghandle") handle: ElementRef;
 
@@ -53,8 +54,6 @@ export class ListComponent implements OnInit, AfterViewChecked {
   ) { }
   
   ngOnInit() {
-    // TODO use UI scheduler
-
     const containerHeight$ = this.containerHeight$.pipe(
       shareReplay(1),
     );
@@ -117,7 +116,10 @@ export class ListComponent implements OnInit, AfterViewChecked {
       share(),
     );
     
-    boundedTop$.subscribe(top => this.top = top);
+    // TODO does a scheduler here improve animation smoothness
+    boundedTop$.pipe(
+      // throttleTime(0, asapScheduler),
+    ).subscribe(top => this.top = top);
 
     combineLatest(boundedTop$, this.containerHeight$).pipe(
       map(([top, containerHeight]) => containerHeight - top)
@@ -133,6 +135,7 @@ export class ListComponent implements OnInit, AfterViewChecked {
 
     this.selectedIndex$.pipe(
       selectIn(itemsArray$),
+      filter<ElementRef>(elementRef => Boolean(elementRef && elementRef.nativeElement)),
       tap<ElementRef>(elementRef => elementRef.nativeElement.scrollIntoView())
     ).subscribe(selectedElementSubject);
 
@@ -150,17 +153,15 @@ export class ListComponent implements OnInit, AfterViewChecked {
     );
   }
 
-  ngAfterViewChecked() {
-    this.items;
-  }
-
   private onItemClick(index: number) {
-    console.log(index);
-    this.itemSelectedFromListSubject.next(index);
-    // this.showIndexSubject.next(index);
+    this.identifyIndexSubject.next(index);
+  }
+  
+  private onItemDoubleclick(index: number) {
+    this.showIndexSubject.next(index);
   }
 
-  private onItemTouchstart(index: number) {
-    this.identifyIndexSubject.next(index);
+  private reduceImage(url: string):string {
+    return url.replace(/o\.jpg$/, "60s.jpg")
   }
 }
