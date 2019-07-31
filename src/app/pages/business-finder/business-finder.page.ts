@@ -36,7 +36,7 @@ export class BusinessFinderPage implements OnInit, AfterContentChecked {
   )
 
   constructor(
-    private searchService: SearchService,
+    public searchService: SearchService,
     private element:ElementRef,
   ) {}
 
