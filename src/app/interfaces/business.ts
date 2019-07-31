@@ -1,3 +1,5 @@
+import { BusinessLocation } from './business-location';
+
 export interface Business {
     alias: string;
     categories: [];
@@ -7,7 +9,7 @@ export interface Business {
     id: string;
     image_url: string;
     is_closed: boolean;
-    location: Location;
+    location: BusinessLocation;
     name:  string;
     phone:  string;
     price:  string;

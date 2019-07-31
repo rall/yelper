@@ -1,4 +1,4 @@
-export interface Location {
+export interface BusinessLocation {
     address1: string;
     address2?: string;
     address3?: string;
