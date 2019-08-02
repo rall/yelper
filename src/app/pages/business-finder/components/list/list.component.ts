@@ -91,7 +91,7 @@ export class ListComponent implements OnInit {
       exhaustMap(() => touchmoveEvents$
         .pipe(
           takeUntil(touchendEvents$),
-          pluck<TouchEvent, number>("pageY"),
+          pluck<TouchEvent, number>("touches", "0", "pageY"),
           pairwise(),
           filter(([previous, current]) => Boolean(current && previous)),
           map(([previous, current]) => current - previous),
