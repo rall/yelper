@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, ChangeDetectorRef, Output, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { Subject, Observable, from, combineLatest, BehaviorSubject, merge, zip, fromEvent } from 'rxjs';
 import { GoogleMap, GoogleMapsEvent, ILatLng, CameraPosition, GoogleMapOptions, MarkerOptions, Marker, VisibleRegion } from '@ionic-native/google-maps/ngx';
-import { switchMap, share, mapTo, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, sample, every, startWith, debounceTime, concatAll, mergeMap, pairwise, concatMap, filter, tap } from 'rxjs/operators';
+import { switchMap, share, mapTo, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, sample, every, startWith, debounceTime, concatAll, mergeMap, pairwise, concatMap, filter, tap, distinctUntilChanged } from 'rxjs/operators';
 import { Platform } from '@ionic/angular';
 import { eventHandler, filterTrue, filterFalse, filterPresent, debug, selectIn } from 'src/app/helpers/rxjs-helpers';
 import { Business } from 'src/app/interfaces/business';
@@ -267,6 +267,7 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
     /* Set the map bottom padding to make room for the slides */
 
     this.pad$.pipe(
+      distinctUntilChanged(),
       map(pad => [0, pad, 0]),
       withLatestFrom(this.mapCreator.googleMapReady$),
     ).subscribe(([pad, googlemap]) => googlemap.setPadding(0, ...pad));
