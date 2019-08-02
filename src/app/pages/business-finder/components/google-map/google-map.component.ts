@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ChangeDetectorRef, Output, ViewChild, ElementRef, AfterViewInit, HostBinding } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectorRef, Output, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { Subject, Observable, from, combineLatest, BehaviorSubject, merge, zip, fromEvent } from 'rxjs';
 import { GoogleMap, GoogleMapsEvent, ILatLng, CameraPosition, GoogleMapOptions, MarkerOptions, Marker, VisibleRegion } from '@ionic-native/google-maps/ngx';
 import { switchMap, share, mapTo, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, sample, every, startWith, debounceTime, concatAll, mergeMap, pairwise, concatMap, filter, tap } from 'rxjs/operators';
