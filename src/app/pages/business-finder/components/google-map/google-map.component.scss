@@ -1,10 +1,5 @@
-#map-canvas {
-    position: relative;
-    width: 100%;
+:host { 
+    display: block;
     height: 100%;
-    .controls {
-        position: absolute;
-        top: 0;
-        right: 0;
-    }
+    width: 100%;
 }

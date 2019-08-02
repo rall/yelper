@@ -10,6 +10,7 @@ import { GoogleMapModule } from './components/google-map/google-map.module';
 import { ListComponent } from './components/list/list.component';
 import { AttributeMutationsModule } from './services/attribute-mutations.module';
 import { IonicRatingModule } from 'ionic4-rating';
+import { GoogleMapServicesModule } from './components/google-map/services/google-map-services.module';
 
 @NgModule({
   imports: [
@@ -20,7 +21,8 @@ import { IonicRatingModule } from 'ionic4-rating';
     RouterModule.forChild([{ path: '', component: BusinessFinderPage }]),
     GoogleMapModule,
     AttributeMutationsModule,
-    IonicRatingModule
+    IonicRatingModule,
+    GoogleMapServicesModule
   ],
   declarations: [
     BusinessFinderPage,

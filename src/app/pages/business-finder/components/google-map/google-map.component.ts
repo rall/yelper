@@ -1,13 +1,13 @@
-import { Component, OnInit, Input, ChangeDetectorRef, Output, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectorRef, Output, ViewChild, ElementRef, AfterViewInit, HostBinding } from '@angular/core';
 import { Subject, Observable, from, combineLatest, BehaviorSubject, merge, zip, fromEvent } from 'rxjs';
-import { GoogleMaps, GoogleMap, GoogleMapsEvent, ILatLng, CameraPosition, GoogleMapOptions, MarkerOptions, Marker, VisibleRegion } from '@ionic-native/google-maps/ngx';
-import { switchMap, share, mapTo, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, sample, every, startWith, debounceTime, concatAll, mergeMap, pairwise, concatMap, filter } from 'rxjs/operators';
-import googleMapOptions from './google-map.options';
+import { GoogleMap, GoogleMapsEvent, ILatLng, CameraPosition, GoogleMapOptions, MarkerOptions, Marker, VisibleRegion } from '@ionic-native/google-maps/ngx';
+import { switchMap, share, mapTo, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, sample, every, startWith, debounceTime, concatAll, mergeMap, pairwise, concatMap, filter, tap } from 'rxjs/operators';
 import { Platform } from '@ionic/angular';
 import { eventHandler, filterTrue, filterFalse, filterPresent, debug, selectIn } from 'src/app/helpers/rxjs-helpers';
 import { Business } from 'src/app/interfaces/business';
 import { coordinatesToLatLng, latlngToMarkerOpts, apiRadiusLimit, positionToMetersPerPx } from 'src/app/helpers/geo-helpers';
 import { ClickEvent } from 'src/app/interfaces/click-event';
+import { MapCreatorService } from './services/map-creator.service';
 
 @Component({
   selector: 'bf-google-map',
@@ -17,7 +17,7 @@ import { ClickEvent } from 'src/app/interfaces/click-event';
 
 export class GoogleMapComponent implements OnInit, AfterViewInit {
   @ViewChild("redo", { read: ElementRef }) ouputSubjectButton:ElementRef;
-
+  
   @Input() pageReadySubject: Subject<boolean>;
   @Input() results$: Observable<Business[]>;
   @Input() allowRedo$: Observable<boolean>;
@@ -43,17 +43,12 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
 
   constructor(
     private platform: Platform,
-    private changeDetectorRef: ChangeDetectorRef
+    private mapCreator: MapCreatorService,
+    private changeDetectorRef: ChangeDetectorRef,
+    private _el: ElementRef<HTMLElement>,
   ) {
-    const platformReady$ = from(this.platform.ready());
-
-    this.googleMapReady$ = platformReady$.pipe(
-      mapTo(GoogleMaps.create({})),
-      switchMap(mapObject => eventHandler(mapObject, GoogleMapsEvent.MAP_READY, true)),
-      shareReplay(1),
-    );
-
-    this.platformDimension$ = platformReady$.pipe(
+    this.platformDimension$ = from(this.platform.ready()).pipe(
+      filter(readysource => readysource === "cordova"),
       mapTo(Math.min(this.platform.height(), this.platform.width())),
       shareReplay(1),
     );
@@ -63,17 +58,12 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
     fromEvent(this.ouputSubjectButton.nativeElement, "click").pipe(
       mapTo(true),
     ).subscribe(this.redoSearchSubject);
+
+    this.mapCreator.createMap(this.pageReadySubject);
   }
 
   ngOnInit() {
-    this.googleMapReady$.subscribe(mapObject => mapObject.setOptions(googleMapOptions));
-
-    const showMap$ = combineLatest(this.googleMapReady$, this.pageReadySubject).pipe(
-      share(),  
-    );
-
-    showMap$.subscribe(([mapObject, visible]) => mapObject.setDiv(visible ? 'map-canvas' : undefined));
-    showMap$.subscribe(([mapObject, visible]) => mapObject.setVisible(visible));
+    this.mapCreator.prepare(this._el);
 
     this.disableRedoButton$ = this.allowRedo$.pipe(
       startWith(false),
@@ -86,7 +76,7 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
     ).subscribe(ref => ref.detectChanges());
 
     const mapCleared$:Observable<boolean> = this.results$.pipe(
-      switchMapTo(this.googleMapReady$),
+      switchMapTo(this.mapCreator.googleMapReady$),
       switchMap(googleMap => googleMap.clear()),
       mapTo(true),
     );
@@ -128,7 +118,7 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
     );
 
     const markerArray$:Observable<Marker[]> = markerOptArray$.pipe(
-      withLatestFrom(this.googleMapReady$),
+      withLatestFrom(this.mapCreator.googleMapReady$),
       switchMap(([opts, mapObject]) => from(opts).pipe(
         map(opts => mapObject.addMarkerSync(opts)),
         toArray(),
@@ -143,7 +133,7 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
     )
     
 
-    const mapClick$ = this.googleMapReady$.pipe(
+    const mapClick$ = this.mapCreator.googleMapReady$.pipe(
       switchMap(googleMap => eventHandler(googleMap, GoogleMapsEvent.MAP_CLICK)),
       mapTo(-1),
       share(),
@@ -219,7 +209,7 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
 
     /* update camera position after each camera move event */
 
-    const cameraMove$:Observable<CameraPosition<ILatLng>> = this.googleMapReady$.pipe(
+    const cameraMove$:Observable<CameraPosition<ILatLng>> = this.mapCreator.googleMapReady$.pipe(
       switchMap(googleMap => eventHandler(googleMap, GoogleMapsEvent.CAMERA_MOVE_END)),
       map(([position]) => position),
       share(),
@@ -228,7 +218,7 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
     combineLatest(mapPositionOpts$, cameraMove$).pipe(
       map(([opts]) => opts),
       sample(this.setBoundsSubject),
-      withLatestFrom(this.googleMapReady$),
+      withLatestFrom(this.mapCreator.googleMapReady$),
     ).subscribe(
       ([cameraPosition, googleMap]) => googleMap.setOptions(cameraPosition)
     );
@@ -240,7 +230,7 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
       );     
     };
 
-    const visibleRegion$ = this.googleMapReady$.pipe(
+    const visibleRegion$ = this.mapCreator.googleMapReady$.pipe(
       map(googleMap => googleMap.getVisibleRegion()),
     );
 
@@ -278,7 +268,7 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
 
     this.pad$.pipe(
       map(pad => [0, pad, 0]),
-      withLatestFrom(this.googleMapReady$),
+      withLatestFrom(this.mapCreator.googleMapReady$),
     ).subscribe(([pad, googlemap]) => googlemap.setPadding(0, ...pad));
   }
 
