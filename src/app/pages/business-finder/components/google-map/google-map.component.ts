@@ -6,7 +6,7 @@ import { Platform } from '@ionic/angular';
 import { eventHandler, filterTrue, filterFalse, filterPresent, debug, selectIn } from 'src/app/helpers/rxjs-helpers';
 import { Business } from 'src/app/interfaces/business';
 import { coordinatesToLatLng, latlngToMarkerOpts, apiRadiusLimit, positionToMetersPerPx } from 'src/app/helpers/geo-helpers';
-import { ClickEvent } from 'src/app/interfaces/click-event';
+import { MapUIEvent } from 'src/app/interfaces/map-ui-event';
 import { MapCreatorService } from './services/map-creator.service';
 
 @Component({
@@ -23,14 +23,14 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
   @Input() allowRedo$: Observable<boolean>;
   @Input() radius:Subject<number>;
   @Input() latlng:Subject<ILatLng>;
-  @Input() clicks$:Observable<ClickEvent>;
+  @Input() clicks$:Observable<MapUIEvent>;
   @Input() pad$:Observable<number>;
 
   redoSearchSubject: Subject<boolean> = new Subject();
   @Output() redoSearch$:Observable<boolean> = this.redoSearchSubject.asObservable();
 
-  mapClickSubject: Subject<ClickEvent> = new Subject();
-  @Output() clickTracker$:Observable<ClickEvent> = this.mapClickSubject.asObservable();
+  mapClickSubject: Subject<MapUIEvent> = new Subject();
+  @Output() clickTracker$:Observable<MapUIEvent> = this.mapClickSubject.asObservable();
   
   googleMapReady$:Observable<GoogleMap>;
   platformDimension$: Observable<number>;
@@ -147,7 +147,7 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
       ),
       mapClick$
     ).pipe(
-      map(index => <ClickEvent>{event: "mapclick", index: index})
+      map(index => <MapUIEvent>{event: "mapclick", index: index})
     ).subscribe(this.mapClickSubject);
 
     /* set  bounds */
@@ -170,7 +170,7 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
     /* track current and previous markers to identify by displaying info window */
 
     const identifyPair$:Observable<number[]> = this.clicks$.pipe(
-      filter<ClickEvent>(event => event.event === "click"),
+      filter<MapUIEvent>(event => event.event === "click"),
       map(evt => evt.index),
       debounceTime(200),
       startWith(-1),
@@ -197,7 +197,7 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
 
 
     this.clicks$.pipe(
-      filter<ClickEvent>(event => event.event === "doubleclick"),
+      filter<MapUIEvent>(event => event.event === "doubleclick"),
       map(evt => evt.index),
       selectIn(markerArray$),
       filterTrue<Marker>(),

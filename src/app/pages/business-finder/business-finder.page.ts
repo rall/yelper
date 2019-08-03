@@ -5,7 +5,7 @@ import { SearchService } from '../../services/search.service';
 import { pluck, map, share, distinctUntilChanged, mapTo, startWith } from 'rxjs/operators';
 import { ILatLng } from '@ionic-native/google-maps/ngx';
 import { filterTrue, debug } from 'src/app/helpers/rxjs-helpers';
-import { ClickEvent } from 'src/app/interfaces/click-event';
+import { MapUIEvent } from 'src/app/interfaces/map-ui-event';
 
 @Component({
   selector: 'app-business-finder-page',
@@ -27,8 +27,8 @@ export class BusinessFinderPage implements OnInit, AfterContentChecked {
   private offsetSubject: Subject<number> = new Subject();
   offset$:Observable<number> = this.offsetSubject.asObservable();
 
-  private clickTrackerSubject:Subject<ClickEvent> = new Subject();
-  clickTracker$:Observable<ClickEvent> = this.clickTrackerSubject.asObservable();
+  private clickTrackerSubject:Subject<MapUIEvent> = new Subject();
+  clickTracker$:Observable<MapUIEvent> = this.clickTrackerSubject.asObservable();
 
   offsetHeightSubject:Subject<number> = new Subject;
   offsetHeight$ = this.offsetHeightSubject.pipe(
@@ -81,7 +81,7 @@ export class BusinessFinderPage implements OnInit, AfterContentChecked {
     this.offsetSubject.next(height);
   }
 
-  onClick(event:ClickEvent) {
+  onClick(event:MapUIEvent) {
     this.clickTrackerSubject.next(event);
   }
 }

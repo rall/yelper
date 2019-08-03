@@ -5,7 +5,7 @@ import { pluck, withLatestFrom, map, pairwise, filter, share, takeUntil, exhaust
 import { AttributeMutationsService } from '../../services/attribute-mutations.service';
 import { IonItem } from '@ionic/angular';
 import { selectIn, filterTrue } from 'src/app/helpers/rxjs-helpers';
-import { ClickEvent } from 'src/app/interfaces/click-event';
+import { MapUIEvent } from 'src/app/interfaces/click-event';
 import { clicksToDoubleclicks } from './rxjs.helpers';
 
 @Component({
@@ -16,7 +16,7 @@ import { clicksToDoubleclicks } from './rxjs.helpers';
 export class ListComponent implements OnInit {
   @Input() results$:Observable<Business[]>;
   @Input() containerHeight$:Observable<number>;
-  @Input() clicks$:Observable<ClickEvent>;
+  @Input() clicks$:Observable<MapUIEvent>;
 
   heightSubject:Subject<number> = new Subject();
   @Output() height$:Observable<number> = this.heightSubject.asObservable();
@@ -24,8 +24,8 @@ export class ListComponent implements OnInit {
   identifyIndexSubject:Subject<number> = new Subject();
   @Output() identifyIndex$:Observable<number> = this.identifyIndexSubject.asObservable();
   
-  clickTrackerSubject:Subject<ClickEvent> = new Subject();
-  @Output() clickTracker$:Observable<ClickEvent> = this.clickTrackerSubject.asObservable();
+  clickTrackerSubject:Subject<MapUIEvent> = new Subject();
+  @Output() clickTracker$:Observable<MapUIEvent> = this.clickTrackerSubject.asObservable();
   
   @HostBinding("style.height.px") height: number;
   @HostBinding("style.top.px") top: number;
@@ -136,7 +136,7 @@ export class ListComponent implements OnInit {
     // map clicks
 
     this.clicks$.pipe(
-      filter<ClickEvent>(event => event.event === "mapclick"),
+      filter<MapUIEvent>(event => event.event === "mapclick"),
       map(evt => evt.index),
       selectIn(itemsArray$),
       filter<ElementRef>(elementRef => Boolean(elementRef && elementRef.nativeElement)),
@@ -147,7 +147,7 @@ export class ListComponent implements OnInit {
     // list clicks
 
     this.clicks$.pipe(
-      filter<ClickEvent>(event => event.event === "click"),
+      filter<MapUIEvent>(event => event.event === "click"),
       map(evt => evt.index),
       selectIn(itemsArray$),
       filter<ElementRef>(elementRef => Boolean(elementRef && elementRef.nativeElement)),
