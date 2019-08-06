@@ -1,10 +1,9 @@
 import { Component, OnInit, Input, ChangeDetectorRef, Output, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { Subject, Observable, from, combineLatest, BehaviorSubject, merge, zip, fromEvent } from 'rxjs';
-import { GoogleMap, GoogleMapsEvent, ILatLng, CameraPosition, GoogleMapOptions, MarkerOptions, Marker, VisibleRegion } from '@ionic-native/google-maps/ngx';
-import { switchMap, share, mapTo, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, sample, every, startWith, debounceTime, concatAll, mergeMap, pairwise, concatMap, filter, tap, distinctUntilChanged } from 'rxjs/operators';
+import { GoogleMap, GoogleMapsEvent, ILatLng, CameraPosition, GoogleMapOptions, Marker, VisibleRegion } from '@ionic-native/google-maps/ngx';
+import { switchMap, share, mapTo, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, sample, every, startWith, debounceTime, concatAll, mergeMap, pairwise, filter, distinctUntilChanged } from 'rxjs/operators';
 import { Platform } from '@ionic/angular';
-import { eventHandler, filterTrue, filterFalse, filterPresent, debug, selectIn, filterEmpty } from 'src/app/helpers/rxjs-helpers';
-import { Business } from 'src/app/interfaces/business';
+import { eventHandler, filterTrue, filterPresent, debug, selectIn, filterEmpty } from 'src/app/helpers/rxjs-helpers';
 import { MapUIEvent } from 'src/app/interfaces/map-ui-event';
 import { MapCreatorService } from './services/map-creator.service';
 import { MarkerService } from './services/marker.service';

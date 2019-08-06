@@ -2,11 +2,10 @@ import { Injectable } from '@angular/core';
 import { GoogleMapServicesModule } from './google-map-services.module';
 import { Subject, Observable, zip, from } from 'rxjs';
 import { Business } from 'src/app/interfaces/business';
-import { share, pluck, toArray, map, takeUntil, concatAll, switchMapTo, switchMap } from 'rxjs/operators';
+import { share, pluck, toArray, map, takeUntil, switchMap } from 'rxjs/operators';
 import { MarkerOptions } from '@ionic-native/google-maps/ngx';
 import { debug } from 'src/app/helpers/rxjs-helpers';
-import { coordinatesToLatLng } from '../../../../../helpers/geo-helpers';
-import { latlngToMarkerOpts } from './geo-helpers';
+import { coordinatesToLatLng, latlngToMarkerOpts } from '../../../../../helpers/geo-helpers';
 
 function businessesToMarkerOpts(businesses):Observable<MarkerOptions[]> {
     const business$ = from(businesses).pipe(
