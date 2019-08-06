@@ -4,8 +4,14 @@ interface Region {
     center: Coordinates;
 }
 
+export interface SearchError {
+    title: string;
+    message: string;
+}
+
 export interface SearchData {
     businesses: Business[];
-    region: Region;
+    region?: Region;
     total: number;
+    error?: SearchError
 }

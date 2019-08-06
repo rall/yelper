@@ -4,7 +4,7 @@ import { distinctUntilChanged, switchMap, map, sample, pluck, filter, mapTo, wit
 import { YelpService } from '../api/yelp.service';
 import { ILatLng, Spherical } from '@ionic-native/google-maps/ngx';
 import { SearchData } from '../interfaces/search-data';
-import { debug } from '../helpers/rxjs-helpers';
+import { debug, filterTrue } from '../helpers/rxjs-helpers';
 import { latLngToCoordinates, coordinatesToLatLng } from '../helpers/geo-helpers';
 
 function coordinatesEquality(a: Coordinates, b: Coordinates) {
@@ -26,6 +26,10 @@ export class SearchService {
   results$ = this.searchSubject.pipe(
     pluck("businesses"),
     shareReplay(1),
+  );
+
+  error$ = this.searchSubject.pipe(
+    pluck("error"),
   );
 
   constructor(
@@ -54,6 +58,7 @@ export class SearchService {
     // the latlng from last search taken from the search data object
     const currentLatLng$ = this.searchSubject.pipe(
       pluck("region", "center"),
+      filterTrue(),
       map(coordinatesToLatLng),
     );
 

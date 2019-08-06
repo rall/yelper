@@ -2,10 +2,12 @@ import { Component, OnInit, ChangeDetectionStrategy, ViewChild, ElementRef, Afte
 import { Subject, Observable, BehaviorSubject } from 'rxjs';
 import { Business } from '../../interfaces/business';
 import { SearchService } from '../../services/search.service';
-import { pluck, map, share, distinctUntilChanged, mapTo, startWith } from 'rxjs/operators';
+import { pluck, map, share, distinctUntilChanged, mapTo, startWith, switchMap } from 'rxjs/operators';
 import { ILatLng } from '@ionic-native/google-maps/ngx';
 import { filterTrue, debug } from 'src/app/helpers/rxjs-helpers';
 import { MapUIEvent } from 'src/app/interfaces/map-ui-event';
+import { ToastController } from '@ionic/angular';
+import { SearchError } from 'src/app/interfaces/search-data';
 
 @Component({
   selector: 'app-business-finder-page',
@@ -38,6 +40,7 @@ export class BusinessFinderPage implements OnInit, AfterContentChecked {
   constructor(
     public searchService: SearchService,
     private element:ElementRef,
+    private toastController: ToastController,
   ) {}
 
   ngOnInit() {
@@ -54,6 +57,10 @@ export class BusinessFinderPage implements OnInit, AfterContentChecked {
     this.allowRedo$ = this.searchService.redoReadySubject.asObservable();
     this.radiusSubject.subscribe(this.searchService.radiusSubject);
     this.latlngSubject.subscribe(this.searchService.latlngSubject);
+
+    this.searchService.error$.pipe(
+      switchMap(this.errorToast.bind(this)),
+    ).subscribe(toast => toast.present());
   }
 
   ngAfterContentChecked() {
@@ -78,5 +85,14 @@ export class BusinessFinderPage implements OnInit, AfterContentChecked {
 
   onClick(event:MapUIEvent) {
     this.clickTrackerSubject.next(event);
+  }
+
+  private errorToast(error:SearchError) {
+    return this.toastController.create({
+      header: error.title,
+      message: error.message,
+      duration: 2000,
+      position: "top",
+    });
   }
 }

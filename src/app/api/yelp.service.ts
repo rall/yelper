@@ -1,9 +1,36 @@
 import { Injectable } from '@angular/core';
 import { HTTP } from '@ionic-native/http/ngx';
-import { from, Observable } from 'rxjs';
-import { pluck, map, filter } from 'rxjs/operators';
-import { SearchData } from '../interfaces/search-data';
+import { from, Observable, of } from 'rxjs';
+import { pluck, map, filter, catchError } from 'rxjs/operators';
+import { SearchData, SearchError } from '../interfaces/search-data';
 import { Platform } from '@ionic/angular';
+
+function errorMessage(code:number) {
+  let message:string;
+  switch(code) {
+    case 400: {
+      message = "Bad request";
+      break;
+    }
+    default: {
+      message = "Something went wrong!";
+    }
+  }
+  return message;
+}
+
+function errorObject(error):Observable<SearchData> {
+  const searchError = <SearchError>{
+    title: 'Server Error',
+    message: errorMessage(error.status)
+  };
+  return of({
+    businesses: [],
+    total: 0,
+    error: searchError
+  });
+}
+
 
 @Injectable({
   providedIn: 'root'
@@ -37,10 +64,11 @@ export class YelpService {
       radius: String(radius),
       ...this.stringify(coordinates)
     };
+
     return from(this.http.get(`${YelpService.baseUrl}businesses/search`, params, undefined)).pipe(
       pluck('data'),
       map<string, SearchData>(response => JSON.parse(response)),
-      // catchError(),
+      catchError(errorObject),
     );
   }
 }
