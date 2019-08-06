@@ -3,11 +3,24 @@ import { Subject, Observable, from, combineLatest, BehaviorSubject, merge, zip, 
 import { GoogleMap, GoogleMapsEvent, ILatLng, CameraPosition, GoogleMapOptions, MarkerOptions, Marker, VisibleRegion } from '@ionic-native/google-maps/ngx';
 import { switchMap, share, mapTo, shareReplay, switchMapTo, pluck, map, toArray, withLatestFrom, sample, every, startWith, debounceTime, concatAll, mergeMap, pairwise, concatMap, filter, tap, distinctUntilChanged } from 'rxjs/operators';
 import { Platform } from '@ionic/angular';
-import { eventHandler, filterTrue, filterFalse, filterPresent, debug, selectIn } from 'src/app/helpers/rxjs-helpers';
+import { eventHandler, filterTrue, filterFalse, filterPresent, debug, selectIn, filterEmpty } from 'src/app/helpers/rxjs-helpers';
 import { Business } from 'src/app/interfaces/business';
-import { coordinatesToLatLng, latlngToMarkerOpts, apiRadiusLimit, positionToMetersPerPx } from 'src/app/helpers/geo-helpers';
 import { MapUIEvent } from 'src/app/interfaces/map-ui-event';
 import { MapCreatorService } from './services/map-creator.service';
+import { MarkerService } from './services/marker.service';
+import { SearchService } from 'src/app/services/search.service';
+
+function radiusLimit(limit: number) {
+  return function(radius:number):number {
+    return radius > limit ? limit : radius;
+  }
+}
+
+// https://gis.stackexchange.com/a/127949
+function positionToMetersPerPx(position:CameraPosition<ILatLng>):number {
+  const lat = position.target.lat;
+  return 156543.03392 * Math.cos(lat * Math.PI / 180) / Math.pow(2, position.zoom);
+}
 
 @Component({
   selector: 'bf-google-map',
@@ -43,6 +56,7 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
     private mapCreator: MapCreatorService,
     private changeDetectorRef: ChangeDetectorRef,
     private _el: ElementRef<HTMLElement>,
+    private markerService:MarkerService,
     private searchService:SearchService,
   ) {
     this.platformDimension$ = from(this.platform.ready()).pipe(
@@ -50,6 +64,7 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
       mapTo(Math.min(this.platform.height(), this.platform.width())),
       shareReplay(1),
     );
+    this.searchService.results$.subscribe(this.markerService.businessesSubject);
   }
 
   ngAfterViewInit() {
@@ -79,43 +94,14 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
       mapTo(true),
     );
 
-    const businesses$:Observable<Business[]> = zip(this.results$, mapCleared$).pipe(
+    zip(this.searchService.results$, mapCleared$).pipe(
       map(([results]) => results),
-      shareReplay(1),
-    );
+      filterEmpty(),
+      mapTo(true),
+    ).subscribe(this.markersContained$);
 
-    function businessesToMarkerOpts(businesses) {
-      const business$ = from(businesses).pipe(
-        share()
-      );
-
-      const latlngOpts$ = business$.pipe(
-        pluck("coordinates"),
-        map(coordinatesToLatLng),
-        map(latlngToMarkerOpts),
-      );
-
-      const names$ = business$.pipe(
-        pluck("name"),
-        map(name => ` ${name}`)
-      );
-
-      const category$ = business$.pipe(
-        pluck<Business, any[]>("categories"),
-        map(categories => categories.map(cat => cat.title).join(", "))
-      );
-
-      return zip(latlngOpts$, names$, category$).pipe(
-        map(([opts, title, category]) => <MarkerOptions>{ ...opts, title: title, snippet: category }),
-        toArray(),
-      )
-    }
-
-    const markerOptArray$ = businesses$.pipe(
-      switchMap(businessesToMarkerOpts),
-    );
-
-    const markerArray$:Observable<Marker[]> = markerOptArray$.pipe(
+    const markerArray$:Observable<Marker[]> = zip(this.markerService.markerOpts$, mapCleared$).pipe(
+      map(([opts]) => opts),
       withLatestFrom(this.mapCreator.googleMapReady$),
       switchMap(([opts, mapObject]) => from(opts).pipe(
         map(opts => mapObject.addMarkerSync(opts)),
@@ -130,7 +116,6 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
       share(),
     )
     
-
     const mapClick$ = this.mapCreator.googleMapReady$.pipe(
       switchMap(googleMap => eventHandler(googleMap, GoogleMapsEvent.MAP_CLICK)),
       mapTo(-1),
@@ -150,7 +135,7 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
 
     /* set  bounds */
 
-    const markersLatlngs$ = markerOptArray$.pipe(
+    const markersLatlngs$ = this.markerService.markerOpts$.pipe(
       switchMap(opts => from(opts).pipe(
         pluck("position"),
         toArray(),
@@ -239,13 +224,8 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
       switchMap(markersInRegion),
       startWith(true),
     ).subscribe(this.markersContained$);
-    
-    businesses$.pipe(
-      pluck("length"),
-      filterFalse(),
-      mapTo(true),
-    ).subscribe(this.markersContained$);
-
+  
+  
     /* update approximate search radius in meters from current camera position */
 
     cameraMove$.pipe(
@@ -253,14 +233,14 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
       withLatestFrom(this.platformDimension$),
       map(([scale, pixels]:[number, number]) => scale * pixels),
       map(diameter => Math.round(diameter/2)),
-      map(apiRadiusLimit),
-    ).subscribe(this.radius);
+      map(radiusLimit(40_000)),
+    ).subscribe(this.searchService.radiusSubject);
 
     /* update latlng from current camera position */
 
     cameraMove$.pipe(
       pluck("target"),
-    ).subscribe(this.latlng);
+    ).subscribe(this.searchService.latlngSubject);
 
     /* Set the map bottom padding to make room for the slides */
 
