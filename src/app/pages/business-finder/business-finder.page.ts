@@ -41,12 +41,7 @@ export class BusinessFinderPage implements OnInit, AfterContentChecked {
   ) {}
 
   ngOnInit() {
-    this.results$ = this.searchService.searchSubject.pipe(
-      pluck("businesses"),
-      share(),
-    );
-
-    this.noResults$ = this.results$.pipe(
+    this.noResults$ = this.searchService.results$.pipe(
       map(results => results.length === 0),
       startWith(true),
     );

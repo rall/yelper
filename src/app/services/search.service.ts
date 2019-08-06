@@ -1,11 +1,15 @@
 import { Injectable } from '@angular/core';
 import { Subject, combineLatest, merge, Observable } from 'rxjs';
-import { distinctUntilChanged, switchMap, map, sample, pluck, filter, mapTo, withLatestFrom } from 'rxjs/operators';
+import { distinctUntilChanged, switchMap, map, sample, pluck, filter, mapTo, withLatestFrom, share, shareReplay } from 'rxjs/operators';
 import { YelpService } from '../api/yelp.service';
 import { ILatLng, Spherical } from '@ionic-native/google-maps/ngx';
 import { SearchData } from '../interfaces/search-data';
 import { debug } from '../helpers/rxjs-helpers';
-import { latLngToCoordinates, coordinatesToLatLng, coordinatesEquality } from '../helpers/geo-helpers';
+import { latLngToCoordinates, coordinatesToLatLng } from '../helpers/geo-helpers';
+
+function coordinatesEquality(a: Coordinates, b: Coordinates) {
+  return a.latitude === b.latitude && a.longitude === b.longitude;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -15,8 +19,14 @@ export class SearchService {
   latlngSubject: Subject<ILatLng> = new Subject();
   termSubject: Subject<string> = new Subject();
   radiusSubject: Subject<number> = new Subject();
-  searchSubject: Subject<SearchData> = new Subject();
   redoReadySubject: Subject<boolean> = new Subject();
+  
+  private searchSubject: Subject<SearchData> = new Subject();
+  
+  results$ = this.searchSubject.pipe(
+    pluck("businesses"),
+    shareReplay(1),
+  );
 
   constructor(
     private yelp:YelpService,
