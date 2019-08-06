@@ -30,6 +30,7 @@ export class SearchService {
 
   error$ = this.searchSubject.pipe(
     pluck("error"),
+    filterTrue(),
   );
 
   constructor(
