@@ -20,14 +20,6 @@ export function latlngToMarkerOpts(latlng:ILatLng):MarkerOptions {
     }
 }
 
-export function coordinatesEquality(a: Coordinates, b: Coordinates) {
-    return a.latitude === b.latitude && a.longitude === b.longitude;
-}
-  
-export function apiRadiusLimit(radius:number):number {
-    return radius > 40000 ? 40000 : radius;
-}
-
 // https://gis.stackexchange.com/a/127949
 export function positionToMetersPerPx(position:CameraPosition<ILatLng>):number {
     const lat = position.target.lat;
