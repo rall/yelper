@@ -16,13 +16,10 @@ import { SearchError } from 'src/app/interfaces/search-data';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BusinessFinderPage implements OnInit, AfterContentChecked {
-  @ViewChild("listresults", { read: ElementRef }) listResults: ElementRef;
-
   readySubject: Subject<boolean> = new Subject();
-  results$: Observable<Business[]>;
   noResults$: Observable<boolean>;
   allowRedo$: Observable<boolean>;
-  
+
   radiusSubject: Subject<number> = new Subject();
   latlngSubject: Subject<ILatLng> = new Subject();
 
