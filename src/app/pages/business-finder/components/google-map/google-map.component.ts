@@ -19,10 +19,7 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
   @ViewChild("redo", { read: ElementRef }) ouputSubjectButton:ElementRef;
   
   @Input() pageReadySubject: Subject<boolean>;
-  @Input() results$: Observable<Business[]>;
   @Input() allowRedo$: Observable<boolean>;
-  @Input() radius:Subject<number>;
-  @Input() latlng:Subject<ILatLng>;
   @Input() clicks$:Observable<MapUIEvent>;
   @Input() pad$:Observable<number>;
 
@@ -46,6 +43,7 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
     private mapCreator: MapCreatorService,
     private changeDetectorRef: ChangeDetectorRef,
     private _el: ElementRef<HTMLElement>,
+    private searchService:SearchService,
   ) {
     this.platformDimension$ = from(this.platform.ready()).pipe(
       filter(readysource => readysource === "cordova"),
@@ -75,7 +73,7 @@ export class GoogleMapComponent implements OnInit, AfterViewInit {
       mapTo(this.changeDetectorRef),
     ).subscribe(ref => ref.detectChanges());
 
-    const mapCleared$:Observable<boolean> = this.results$.pipe(
+    const mapCleared$:Observable<boolean> = this.searchService.results$.pipe(
       switchMapTo(this.mapCreator.googleMapReady$),
       switchMap(googleMap => googleMap.clear()),
       mapTo(true),

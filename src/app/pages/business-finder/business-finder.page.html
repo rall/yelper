@@ -6,10 +6,7 @@
 
 <ion-content no-bounce>
   <bf-google-map [pageReadySubject]="readySubject" 
-                 [results$]="results$" 
                  [allowRedo$]="allowRedo$" 
-                 [radius]="searchService.radiusSubject" 
-                 [latlng]="searchService.latlngSubject" 
                  [pad$]="offset$"
                  (redoSearch$)="onRedoSearch($event)"
                  [clicks$]="clickTracker$"
@@ -20,7 +17,6 @@
 <bf-list #listresults 
         [hidden]="noResults$ | async"
         [containerHeight$]="offsetHeight$"
-        [results$]="results$"
         (height$)="onHeightChange($event)"
         [clicks$]="clickTracker$"
         (clickTracker$)="onClick($event)">

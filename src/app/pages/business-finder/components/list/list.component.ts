@@ -7,6 +7,7 @@ import { IonItem } from '@ionic/angular';
 import { selectIn, filterTrue } from 'src/app/helpers/rxjs-helpers';
 import { MapUIEvent } from 'src/app/interfaces/click-event';
 import { clicksToDoubleclicks } from './rxjs.helpers';
+import { SearchService } from 'src/app/services/search.service';
 
 @Component({
   selector: 'bf-list',
@@ -14,7 +15,6 @@ import { clicksToDoubleclicks } from './rxjs.helpers';
   styleUrls: ['./list.component.scss'],
 })
 export class ListComponent implements OnInit {
-  @Input() results$:Observable<Business[]>;
   @Input() containerHeight$:Observable<number>;
   @Input() clicks$:Observable<MapUIEvent>;
 
@@ -51,6 +51,7 @@ export class ListComponent implements OnInit {
     private _element:ElementRef,
     private mutations: AttributeMutationsService,
     private renderer: Renderer2,
+    private searchService: SearchService,
   ) { }
   
   ngOnInit() {

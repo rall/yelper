@@ -1,7 +1,7 @@
 <div #draghandle id="draghandle" text-center>RESULTS</div>
 <ion-content>
   <ion-list>
-    <ion-item *ngFor="let item of (results$ | async); let idx = index" button (click)="onItemClick($event, idx)" [detail]="false">
+    <ion-item *ngFor="let item of (searchService.results$ | async); let idx = index" button (click)="onItemClick($event, idx)" [detail]="false">
         <ion-thumbnail slot="start">
           <ion-img [src]="reduceImage(item.image_url)"></ion-img>
         </ion-thumbnail>
