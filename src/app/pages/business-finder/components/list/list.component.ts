@@ -1,13 +1,12 @@
 import { Component, OnInit, Input, HostBinding, ViewChild, ElementRef, Output, ViewChildren, QueryList, Renderer2 } from '@angular/core';
 import { Observable, fromEvent, Subject, combineLatest } from 'rxjs';
-import { Business } from 'src/app/interfaces/business';
 import { pluck, withLatestFrom, map, pairwise, filter, share, takeUntil, exhaustMap, shareReplay, startWith, tap, throttleTime, buffer } from 'rxjs/operators';
 import { AttributeMutationsService } from '../../services/attribute-mutations.service';
 import { IonItem } from '@ionic/angular';
 import { selectIn, filterTrue } from 'src/app/helpers/rxjs-helpers';
-import { MapUIEvent } from 'src/app/interfaces/click-event';
 import { clicksToDoubleclicks } from './rxjs.helpers';
 import { SearchService } from 'src/app/services/search.service';
+import { MapUIEvent } from 'src/app/interfaces/map-ui-event';
 
 @Component({
   selector: 'bf-list',
