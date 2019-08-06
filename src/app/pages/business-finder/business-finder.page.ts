@@ -1,8 +1,7 @@
-import { Component, OnInit, ChangeDetectionStrategy, ViewChild, ElementRef, AfterContentChecked } from '@angular/core';
-import { Subject, Observable, BehaviorSubject } from 'rxjs';
-import { Business } from '../../interfaces/business';
+import { Component, OnInit, ChangeDetectionStrategy, ElementRef, AfterContentChecked } from '@angular/core';
+import { Subject, Observable } from 'rxjs';
 import { SearchService } from '../../services/search.service';
-import { pluck, map, share, distinctUntilChanged, mapTo, startWith, switchMap } from 'rxjs/operators';
+import { map, distinctUntilChanged, mapTo, startWith, switchMap } from 'rxjs/operators';
 import { ILatLng } from '@ionic-native/google-maps/ngx';
 import { filterTrue, debug } from 'src/app/helpers/rxjs-helpers';
 import { MapUIEvent } from 'src/app/interfaces/map-ui-event';
