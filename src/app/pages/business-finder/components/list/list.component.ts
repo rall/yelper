@@ -7,6 +7,7 @@ import { selectIn, filterTrue } from 'src/app/helpers/rxjs-helpers';
 import { clicksToDoubleclicks } from './rxjs.helpers';
 import { SearchService } from 'src/app/services/search.service';
 import { MapUIEvent } from 'src/app/interfaces/map-ui-event';
+import { GestureService } from '../google-map/services/gestures.service';
 
 @Component({
   selector: 'bf-list',
@@ -51,6 +52,7 @@ export class ListComponent implements OnInit {
     private mutations: AttributeMutationsService,
     private renderer: Renderer2,
     private searchService: SearchService,
+    private gestures: GestureService
   ) { }
   
   ngOnInit() {
@@ -87,18 +89,9 @@ export class ListComponent implements OnInit {
 
     touchmoveEvents$.subscribe(evt => evt.preventDefault());
 
-    touchstartEvents$.pipe(
-      exhaustMap(() => touchmoveEvents$
-        .pipe(
-          takeUntil(touchendEvents$),
-          pluck<TouchEvent, number>("touches", "0", "pageY"),
-          pairwise(),
-          filter(([previous, current]) => Boolean(current && previous)),
-          map(([previous, current]) => current - previous),
+    this.gestures.dragY(touchstartEvents$, touchmoveEvents$, touchendEvents$).pipe(
           withLatestFrom(topMutation$),
           map(([delta, top]) => top + delta),
-        )
-      ),
     ).subscribe(topSubject);
 
     const topBound$ = containerHeight$.pipe(
