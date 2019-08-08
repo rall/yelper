@@ -31,4 +31,21 @@ export class GestureService {
         )
     }
 
+    public swipeY(touchstart$:Observable<TouchEvent>, touchmove$:Observable<TouchEvent>, touchend$:Observable<TouchEvent>):Observable<number> {
+        return touchstart$.pipe(
+            takeUntil(touchend$),
+            exhaustMap(() => touchmove$
+                .pipe(
+                    pluck<TouchEvent, number>("touches", "0", "pageY"),
+                    mergeMap(startY => touchmove$.pipe(
+                        takeUntil(timer(this.swipeTime)),
+                        pluck<TouchEvent, number>("touches", "0", "pageY"),
+                        reduce((acc, value) => acc = startY - value, 0),
+                    )),
+                    filter(dy => Math.abs(dy) > this.swipeZone),
+                    throttleTime(this.swipeTime * 4),
+                )
+            ),
+        )
+    }
 }
